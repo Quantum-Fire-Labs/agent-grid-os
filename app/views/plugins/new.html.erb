@@ -1,0 +1,27 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Plugins", plugins_path %> <span class="breadcrumb-sep">/</span> <span>Install plugin</span>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-header">
+      <h1>Install a plugin</h1>
+      <p class="form-card-subtitle">Install a plugin from a local filesystem path.</p>
+    </div>
+
+    <%= form_with url: plugins_path, method: :post, class: "form-body" do |form| %>
+      <div class="form-group">
+        <%= form.label :source_path, "Plugin path" %>
+        <%= form.text_field :source_path, required: true, autofocus: true, placeholder: "/path/to/plugin/directory" %>
+        <p class="form-hint">Directory containing a plugin.yaml manifest file.</p>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit "Install plugin", class: "btn btn-primary" %>
+        <%= link_to "Cancel", plugins_path, class: "btn btn-ghost" %>
+      </div>
+    <% end %>
+  </div>
+</div>

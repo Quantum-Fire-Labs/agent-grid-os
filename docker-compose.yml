@@ -1,0 +1,37 @@
+services:
+  app:
+    image: ghcr.io/quantum-fire-labs/the-grid:latest
+    # build: .  # Uncomment to build from source instead
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      RAILS_ENV: production
+      ALLOWED_HOSTS: "${DOMAIN}"
+      SOLID_QUEUE_IN_PUMA: "${SOLID_QUEUE_IN_PUMA:-true}"
+    volumes:
+      - storage:/rails/storage
+    networks:
+      - web
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: "${DOMAIN}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+
+volumes:
+  storage:
+  caddy_data:
+  caddy_config:
+
+networks:
+  web:

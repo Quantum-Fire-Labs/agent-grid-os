@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+# If running the rails server then prepare database and create admin user
+if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+  ./bin/rails db:prepare
+  ./bin/rails grid:setup
+fi
+
+exec "${@}"

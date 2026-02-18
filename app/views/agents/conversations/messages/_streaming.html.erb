@@ -1,0 +1,16 @@
+<div class="chat-msg chat-msg-assistant" id="streaming-message-<%= stream_id %>">
+  <div class="chat-msg-gutter">
+    <div class="chat-avatar chat-avatar-agent">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
+        <circle cx="7" cy="7" r="1.5" fill="currentColor"/>
+      </svg>
+    </div>
+  </div>
+  <div class="chat-msg-body">
+    <div class="chat-msg-meta">
+      <span class="chat-msg-sender"><%= agent.name %></span>
+    </div>
+    <div class="chat-msg-text" id="streaming-content-<%= stream_id %>"><%= content if local_assigns[:content] %></div>
+  </div>
+</div>

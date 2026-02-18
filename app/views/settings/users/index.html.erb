@@ -1,0 +1,47 @@
+<%= render "settings/layout" do %>
+  <div class="settings-section settings-section-wide">
+    <div class="settings-section-header">
+      <h2 class="settings-section-title">Users</h2>
+      <% if Current.user.admin? %>
+        <%= link_to "Add user", new_settings_user_path, class: "btn btn-primary btn-sm" %>
+      <% end %>
+    </div>
+
+    <% if @users.many? %>
+      <div class="user-list">
+        <% @users.each do |user| %>
+          <%= link_to settings_user_path(user), class: "user-row" do %>
+            <div class="user-row-left">
+              <div class="user-avatar"><%= user.first_name[0] %><%= user.last_name[0] %></div>
+              <div class="user-row-info">
+                <span class="user-row-name">
+                  <%= user.first_name %> <%= user.last_name %>
+                  <% if user == Current.user %>
+                    <span class="user-badge-you">You</span>
+                  <% end %>
+                  <span class="user-badge-role user-badge-role-<%= user.role %>"><%= user.role.capitalize %></span>
+                </span>
+                <span class="user-row-email"><%= user.email_address %></span>
+              </div>
+            </div>
+            <div class="user-row-right">
+              <span class="user-row-joined">Joined <%= user.created_at.strftime("%b %Y") %></span>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="user-empty-state">
+        <div class="user-empty-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <line x1="19" y1="8" x2="19" y2="14"/>
+            <line x1="22" y1="11" x2="16" y2="11"/>
+          </svg>
+        </div>
+        <p class="settings-empty">You're the only user on this account. Add teammates to collaborate.</p>
+      </div>
+    <% end %>
+  </div>
+<% end %>

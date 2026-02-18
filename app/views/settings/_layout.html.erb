@@ -1,0 +1,21 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <h1>Settings</h1>
+  </div>
+
+  <div class="settings-layout">
+    <nav class="settings-nav">
+      <%= link_to "Profile", settings_profile_path, class: "settings-nav-link #{"settings-nav-link-active" if controller_name == "profiles"}" %>
+      <% if Current.user.admin? %>
+        <%= link_to "Account", settings_account_path, class: "settings-nav-link #{"settings-nav-link-active" if controller_name == "accounts"}" %>
+        <%= link_to "Providers", settings_providers_path, class: "settings-nav-link #{"settings-nav-link-active" if controller_name == "providers"}" %>
+        <%= link_to "Voice & Speech", settings_voice_path, class: "settings-nav-link #{"settings-nav-link-active" if controller_name == "voices"}" %>
+        <%= link_to "Users", settings_users_path, class: "settings-nav-link #{"settings-nav-link-active" if controller_name == "users"}" %>
+      <% end %>
+    </nav>
+
+    <div class="settings-content">
+      <%= yield %>
+    </div>
+  </div>
+</div>

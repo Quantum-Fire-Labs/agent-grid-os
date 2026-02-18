@@ -1,0 +1,121 @@
+<% is_user = message.role == "user" %>
+<% is_system = message.role == "system" %>
+<% is_tool_call = message.role == "assistant" && message.tool_calls.present? %>
+<% is_tool_result = message.role == "tool" %>
+<% if is_system %>
+  <div class="chat-msg chat-msg-system" id="<%= dom_id(message) %>" data-created-at="<%= message.created_at.iso8601(6) %>">
+    <div class="chat-msg-body">
+      <div class="chat-msg-meta">
+        <span class="chat-msg-sender">System</span>
+        <span class="chat-msg-time"><%= message.created_at.strftime("%-I:%M %p") %></span>
+      </div>
+      <div class="chat-tool-box">
+        <pre class="chat-tool-content"><%= message.content.truncate(500) %></pre>
+      </div>
+    </div>
+  </div>
+<% elsif is_tool_call || is_tool_result %>
+  <div class="chat-msg chat-msg-assistant" id="<%= dom_id(message) %>" data-created-at="<%= message.created_at.iso8601(6) %>">
+    <div class="chat-msg-gutter">
+      <div class="chat-avatar chat-avatar-agent">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="7" cy="7" r="1.5" fill="currentColor"/>
+        </svg>
+      </div>
+    </div>
+    <div class="chat-msg-body">
+      <div class="chat-msg-meta">
+        <span class="chat-msg-meta-left">
+          <span class="chat-msg-sender"><%= agent.name %></span>
+          <span class="chat-msg-time"><%= message.created_at.strftime("%-I:%M %p") %></span>
+        </span>
+        <% if message.conversation.kind_direct? %>
+          <%= button_to agent_conversation_message_path(message.conversation.agent, message.conversation, message), method: :delete, class: "chat-msg-delete", data: { turbo_confirm: "Delete this message?" } do %>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <% end %>
+        <% end %>
+      </div>
+      <% if is_tool_call && message.content.present? %>
+        <div class="chat-msg-text"><%= format_message_content(message) %></div>
+      <% end %>
+      <div class="chat-tool-box">
+        <% if is_tool_call %>
+          <% message.tool_calls.each do |tc| %>
+            <% name = tc.is_a?(Hash) ? tc.dig("function", "name") : tc["name"] %>
+            <div class="chat-tool-label">Tool: <%= name %></div>
+            <% args = tc.is_a?(Hash) ? tc.dig("function", "arguments") : tc["arguments"] %>
+            <% if args.present? %>
+              <% parsed = args.is_a?(String) ? (JSON.parse(args) rescue nil) : args %>
+              <% if parsed.is_a?(Hash) %>
+                <pre class="chat-tool-content"><%= parsed.map { |k, v| "#{k}: #{v}" }.join("\n") %></pre>
+              <% end %>
+            <% end %>
+          <% end %>
+        <% else %>
+          <div class="chat-tool-label">Result</div>
+          <pre class="chat-tool-content"><%= message.content.truncate(300) %></pre>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% else %>
+  <div class="chat-msg chat-msg-<%= message.role %>" id="<%= dom_id(message) %>" data-created-at="<%= message.created_at.iso8601(6) %>">
+    <div class="chat-msg-gutter">
+      <% if is_user %>
+        <div class="chat-avatar chat-avatar-user">
+          <%= message.user&.first_name&.first || "?" %>
+        </div>
+      <% else %>
+        <div class="chat-avatar chat-avatar-agent">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="7" cy="7" r="1.5" fill="currentColor"/>
+          </svg>
+        </div>
+      <% end %>
+    </div>
+    <div class="chat-msg-body">
+      <div class="chat-msg-meta">
+        <span class="chat-msg-meta-left">
+          <span class="chat-msg-sender"><%= is_user ? message.user&.first_name || "User" : agent.name %></span>
+          <span class="chat-msg-time"><%= message.created_at.strftime("%-I:%M %p") %></span>
+        </span>
+        <% if message.conversation.kind_direct? %>
+          <%= button_to agent_conversation_message_path(message.conversation.agent, message.conversation, message), method: :delete, class: "chat-msg-delete", data: { turbo_confirm: "Delete this message?" } do %>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <% end %>
+        <% end %>
+      </div>
+      <div class="chat-msg-text"><%= format_message_content(message) %></div>
+      <div id="<%= dom_id(message, :audio) %>">
+        <% if message.audio.attached? %>
+          <div class="audio-player" data-controller="audio-player" data-audio-player-autoplay-value="<%= local_assigns[:autoplay] ? "true" : "false" %>" data-audio-player-regenerate-url-value="<%= regenerate_agent_conversation_message_speech_path(agent, message.conversation, message) %>">
+            <button class="audio-player-btn" data-action="audio-player#toggle" data-audio-player-target="playBtn" type="button" aria-label="Play audio">
+              <svg class="audio-player-icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+              <svg class="audio-player-icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>
+            </button>
+            <div class="audio-player-wave" data-audio-player-target="wave">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="audio-player-track" data-audio-player-target="progress">
+              <div class="audio-player-fill" data-audio-player-target="fill"></div>
+            </div>
+            <span class="audio-player-time" data-audio-player-target="time">0:00</span>
+            <button class="audio-player-regenerate" data-action="audio-player#regenerate" type="button" aria-label="Regenerate audio">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            </button>
+            <audio src="<%= rails_blob_path(message.audio, only_path: true) %>" data-audio-player-target="audio" preload="metadata"></audio>
+          </div>
+        <% elsif !is_user && message.content.present? %>
+          <div class="audio-player audio-player-synthesize" data-controller="audio-player" data-audio-player-synthesize-url-value="<%= agent_conversation_message_speech_path(agent, message.conversation, message) %>">
+            <button class="audio-player-btn" data-action="audio-player#toggle" data-audio-player-target="playBtn" type="button" aria-label="Play audio">
+              <svg class="audio-player-icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+              <svg class="audio-player-icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

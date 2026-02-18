@@ -1,0 +1,159 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <%= link_to @agent.name, agent_path(@agent) %> <span class="breadcrumb-sep">/</span> <span>Settings</span>
+    </div>
+  </div>
+
+  <% if flash[:notice] %>
+    <div class="flash flash-notice"><%= flash[:notice] %></div>
+  <% end %>
+
+  <div class="settings-section">
+    <div class="settings-section-header">
+      <h2 class="settings-section-title">Workspace</h2>
+    </div>
+
+    <%= form_with url: agent_settings_path(@agent), method: :patch, class: "settings-form" do |form| %>
+      <div class="form-group">
+        <label class="toggle-label">
+          <%= form.check_box :workspace_enabled, { checked: @agent.workspace_enabled?, name: "agent_settings[workspace_enabled]" }, "1", "0" %>
+          <span>Enable workspace</span>
+        </label>
+        <p class="form-hint">Gives this agent a sandboxed Docker container for code execution, file I/O, and package installation. The container persists across restarts.</p>
+      </div>
+
+      <div class="form-actions-inline">
+        <%= form.submit "Save", class: "btn btn-primary btn-sm" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-header">
+      <h2 class="settings-section-title">Voice & Speech</h2>
+    </div>
+
+    <%= form_with url: agent_settings_path(@agent), method: :patch, class: "settings-form" do |form| %>
+      <div class="form-group">
+        <label class="toggle-label">
+          <%= form.check_box :tts_enabled, { checked: @tts_enabled, name: "agent_settings[tts_enabled]" }, "true", "false" %>
+          <span>Enable text-to-speech</span>
+        </label>
+        <p class="form-hint">When enabled, this agent's replies can be read aloud.</p>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :tts_provider, "TTS provider", for: "agent_settings_tts_provider" %>
+        <%= form.select :tts_provider,
+          options_for_select([
+            ["Use account settings", "inherit"],
+            ["OpenAI", "openai"],
+            ["ElevenLabs", "elevenlabs"]
+          ], @tts_provider),
+          {}, { name: "agent_settings[tts_provider]", id: "agent_settings_tts_provider", class: "form-select", onchange: "this.form.requestSubmit()" } %>
+      </div>
+
+      <% if @tts_provider == "inherit" %>
+        <p class="form-hint">Using account defaults (<%= @effective_tts_provider.capitalize %> / <%= @account_voice || "default voice" %>). <%= link_to "Edit account voice settings", settings_voice_path %>.</p>
+      <% else %>
+        <% if @effective_tts_provider == "elevenlabs" %>
+          <div class="form-group">
+            <%= form.label :elevenlabs_model, "ElevenLabs model", for: "agent_settings_elevenlabs_model" %>
+            <%= form.select :elevenlabs_model,
+              options_for_select(
+                Agent::Audio::ElevenlabsTts::MODELS.map { |id, info|
+                  ["#{info[:name]} — #{info[:desc]}", id]
+                },
+                @elevenlabs_model
+              ),
+              {}, { name: "agent_settings[elevenlabs_model]", id: "agent_settings_elevenlabs_model", class: "form-select", onchange: "this.form.requestSubmit()" } %>
+          </div>
+        <% end %>
+
+        <div class="form-group">
+          <%= form.label :voice, "TTS Voice", for: "agent_settings_voice" %>
+          <p class="form-hint">Choose the voice used for text-to-speech audio replies.</p>
+          <% if @voices.any? %>
+            <div class="voice-options">
+              <% @voices.each do |voice| %>
+                <label class="voice-option <%= 'voice-option-selected' if voice[:id] == @current_voice %>">
+                  <%= form.radio_button :voice, voice[:id], name: "agent_settings[voice]", id: "voice_#{voice[:id]}", checked: voice[:id] == @current_voice %>
+                  <span class="voice-option-name"><%= voice[:name] %></span>
+                  <% if voice[:labels].present? %>
+                    <span class="voice-option-label"><%= [voice[:labels]["gender"], voice[:labels]["accent"]].compact.join(", ") %></span>
+                  <% end %>
+                  <% if voice[:preview_url] %>
+                    <button type="button" class="voice-preview-btn" data-preview-url="<%= voice[:preview_url] %>" title="Preview voice">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    </button>
+                  <% end %>
+                </label>
+              <% end %>
+            </div>
+          <% else %>
+            <%= form.select :voice,
+              options_for_select(Agent::Audio.voices_for(@effective_tts_provider).map { |v| [v.capitalize, v] }, @current_voice),
+              { include_blank: "Provider default" },
+              { name: "agent_settings[voice]", class: "form-select" } %>
+          <% end %>
+        </div>
+
+        <% speed_min = @effective_tts_provider == "elevenlabs" ? 0.7 : 0.25 %>
+        <% speed_max = @effective_tts_provider == "elevenlabs" ? 1.2 : 4.0 %>
+        <% speed_val = @tts_speed.present? ? @tts_speed.to_f : 1.0 %>
+        <div class="form-group">
+          <%= form.label :tts_speed, "Speaking speed" %>
+          <div class="range-with-value">
+            <%= form.range_field :tts_speed,
+              min: speed_min, max: speed_max, step: 0.05,
+              value: speed_val,
+              name: "agent_settings[tts_speed]",
+              id: "agent_tts_speed_range",
+              oninput: "document.getElementById('agent_tts_speed_value').textContent = parseFloat(this.value).toFixed(2)" %>
+            <span id="agent_tts_speed_value" class="range-value"><%= format("%.2f", speed_val) %></span>
+          </div>
+          <p class="form-hint">1.00 is normal. Overrides account default for this agent.</p>
+        </div>
+      <% end %>
+
+      <div class="form-group">
+        <%= form.label :stt_provider, "STT provider", for: "agent_settings_stt_provider" %>
+        <%= form.select :stt_provider,
+          options_for_select([
+            ["Use account settings", "inherit"],
+            ["OpenAI Whisper", "openai"],
+            ["Local Whisper", "local"]
+          ], @stt_provider),
+          {}, { name: "agent_settings[stt_provider]", id: "agent_settings_stt_provider", class: "form-select" } %>
+      </div>
+
+      <div class="form-actions-inline">
+        <%= form.submit "Save", class: "btn btn-primary btn-sm" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  (() => {
+    let currentAudio = null;
+    document.querySelectorAll(".voice-preview-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+          document.querySelectorAll(".voice-preview-btn.playing").forEach(b => b.classList.remove("playing"));
+        }
+        const url = btn.dataset.previewUrl;
+        if (url) {
+          currentAudio = new Audio(url);
+          btn.classList.add("playing");
+          currentAudio.addEventListener("ended", () => btn.classList.remove("playing"));
+          currentAudio.play();
+        }
+      });
+    });
+  })();
+</script>

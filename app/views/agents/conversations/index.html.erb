@@ -1,0 +1,38 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <%= link_to @agent.name, agent_path(@agent) %> <span class="breadcrumb-sep">/</span> <span>Conversations</span>
+    </div>
+    <div class="dashboard-actions">
+      <%= button_to "New Group Chat", agent_conversations_path(@agent), method: :post, class: "btn btn-primary btn-sm" %>
+    </div>
+  </div>
+
+  <% if @conversations.any? %>
+    <div class="conversations-list">
+      <% @conversations.each do |conversation| %>
+        <%= link_to chat_path(conversation), class: "conversation-row" do %>
+          <div class="conversation-row-left">
+            <span class="conversation-kind-badge badge-<%= conversation.kind %>"><%= conversation.kind %></span>
+            <div class="conversation-row-info">
+              <span class="conversation-row-name"><%= conversation.display_name %></span>
+              <% if (last = conversation.last_message) %>
+                <span class="conversation-row-preview"><%= truncate(last.content, length: 80) %></span>
+              <% end %>
+            </div>
+          </div>
+          <div class="conversation-row-right">
+            <% if (last = conversation.last_message) %>
+              <span class="conversation-row-time"><%= time_ago_in_words(last.created_at) %> ago</span>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <h2>No conversations yet</h2>
+      <p>Start a conversation with <%= @agent.name %>.</p>
+    </div>
+  <% end %>
+</div>

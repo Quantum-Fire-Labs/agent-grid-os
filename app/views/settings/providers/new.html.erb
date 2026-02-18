@@ -1,0 +1,6 @@
+<%= render "settings/layout" do %>
+  <div class="settings-section">
+    <h2 class="settings-section-title">Add provider</h2>
+    <%= render "shared/provider_form", provider: @provider, url: settings_providers_path, cancel_url: settings_providers_path %>
+  </div>
+<% end %>

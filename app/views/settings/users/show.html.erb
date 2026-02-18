@@ -1,0 +1,46 @@
+<%= render "settings/layout" do %>
+  <div class="settings-section settings-section-wide">
+    <div class="user-profile">
+      <div class="user-profile-header">
+        <div class="user-profile-identity">
+          <div class="user-avatar user-avatar-lg"><%= @user.first_name[0] %><%= @user.last_name[0] %></div>
+          <div class="user-profile-name-block">
+            <h2 class="user-profile-name">
+              <%= @user.first_name %> <%= @user.last_name %>
+              <% if @user == Current.user %>
+                <span class="user-badge-you">You</span>
+              <% end %>
+              <span class="user-badge-role user-badge-role-<%= @user.role %>"><%= @user.role.capitalize %></span>
+            </h2>
+            <span class="user-profile-email"><%= @user.email_address %></span>
+          </div>
+        </div>
+        <% if Current.user.admin? %>
+          <div class="user-profile-actions">
+            <%= link_to "Edit", edit_settings_user_path(@user), class: "btn btn-ghost btn-sm" %>
+            <% unless @user == Current.user %>
+              <%= button_to "Delete", settings_user_path(@user), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Remove this user?" } %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="user-profile-meta">
+        <% if @user.time_zone.present? %>
+          <div class="meta-item">
+            <span class="meta-label">Time zone</span>
+            <span class="meta-value"><%= @user.time_zone %></span>
+          </div>
+        <% end %>
+        <div class="meta-item">
+          <span class="meta-label">Joined</span>
+          <span class="meta-value"><%= @user.created_at.strftime("%B %-d, %Y") %></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Conversations</span>
+          <span class="meta-value"><%= @user.conversations.count %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

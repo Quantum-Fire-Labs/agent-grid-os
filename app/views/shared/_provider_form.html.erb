@@ -1,0 +1,49 @@
+<%= form_with model: provider, url: url, class: "settings-form", data: { turbo_frame: "_top", controller: "provider-form" } do |form| %>
+  <div class="form-group">
+    <%= form.label :name, "Provider" %>
+    <%= form.select :name, Provider::CLIENTS.map { |k, v| [v.display_name, k] }, {}, { class: "form-select", data: { provider_form_target: "nameSelect", action: "provider-form#nameChanged" } } %>
+  </div>
+
+  <div class="form-group" data-provider-form-target="apiKeySection">
+    <%= form.label :api_key %>
+    <%= form.text_field :api_key, placeholder: provider.persisted? ? "Leave blank to keep current key" : "sk-..." %>
+    <% if provider.persisted? %>
+      <p class="form-hint">Leave blank to keep the existing key.</p>
+    <% end %>
+  </div>
+
+  <div class="form-group" data-provider-form-target="oauthSection" hidden>
+    <label>Connection</label>
+    <div data-provider-form-target="oauthStatus">
+      <% if provider.persisted? && provider.name == "chatgpt" && provider.connected? %>
+        <p class="text-success">Connected</p>
+      <% end %>
+    </div>
+    <div data-provider-form-target="oauthActions">
+      <% if provider.persisted? && provider.name == "chatgpt" && provider.connected? %>
+        <button type="button" class="btn btn-ghost btn-sm text-danger" data-action="provider-form#disconnectOauth">Disconnect</button>
+      <% else %>
+        <button type="button" class="btn btn-primary btn-sm" data-action="provider-form#startOauth">Connect</button>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="form-group" data-provider-form-target="modelGroup">
+    <%= form.label :model, "Default model" %>
+    <select class="form-select" data-provider-form-target="modelSelect" data-action="provider-form#modelSelectChanged" hidden>
+      <option value="">Select a model...</option>
+    </select>
+    <%= form.text_field :model, placeholder: "e.g. gpt-4o-mini", data: { provider_form_target: "modelText" } %>
+    <p class="form-hint">The model to use when no override is specified.</p>
+  </div>
+
+  <div class="form-group">
+    <%= form.label :designation %>
+    <%= form.select :designation, Provider.designations.keys.map { |k| [k.titleize, k] }, {}, { class: "form-select", data: { provider_form_target: "designation", action: "provider-form#designationChanged" } } %>
+  </div>
+
+  <div class="form-actions-inline">
+    <%= form.submit provider.persisted? ? "Update provider" : "Add provider", class: "btn btn-primary btn-sm" %>
+    <%= link_to "Cancel", cancel_url, class: "btn btn-ghost btn-sm" %>
+  </div>
+<% end %>

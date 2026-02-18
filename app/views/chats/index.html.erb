@@ -1,0 +1,189 @@
+<% if @conversation %>
+  <%= turbo_stream_from @conversation %>
+<% end %>
+
+<div class="chat-hub" data-controller="chat-hub" data-chat-hub-has-conversation-value="<%= @conversation.present? %>">
+  <%# ── Sidebar ── %>
+  <div class="chat-hub-sidebar" data-chat-hub-target="sidebar">
+    <div class="chat-hub-sidebar-header">
+      <h2 class="chat-hub-title">Messages</h2>
+      <% if Current.user.admin? %>
+        <%= button_to "New Group", chats_path, method: :post, class: "btn btn-ghost btn-xs" %>
+      <% end %>
+    </div>
+
+    <div class="chat-hub-search">
+      <input type="search" placeholder="Search conversations..." class="chat-hub-search-input" data-chat-hub-target="search" data-action="input->chat-hub#filter" autocomplete="off" />
+    </div>
+
+    <div class="chat-hub-conversations" data-chat-hub-target="list">
+      <% if @conversations.any? %>
+        <% @conversations.each do |conversation| %>
+          <%= link_to chat_path(conversation),
+                class: "chat-hub-convo #{"chat-hub-convo-active" if @conversation == conversation}",
+                data: {
+                  chat_hub_target: "conversation",
+                  name: conversation.display_name.downcase,
+                  action: "click->chat-hub#selectConversation"
+                } do %>
+            <div class="chat-hub-convo-avatar">
+              <div class="chat-agent-indicator">
+                <span class="chat-agent-dot"></span>
+              </div>
+            </div>
+            <% last = conversation.last_message %>
+            <div class="chat-hub-convo-body">
+              <div class="chat-hub-convo-top">
+                <span class="chat-hub-convo-name"><%= conversation.display_name %><% if conversation.kind_direct? && conversation.agent.title.present? %> <span class="chat-hub-convo-title">(<%= conversation.agent.title %>)</span><% end %></span>
+                <% if last %>
+                  <span class="chat-hub-convo-time"><%= time_ago_in_words(last.created_at) %></span>
+                <% end %>
+              </div>
+              <% if last %>
+                <span class="chat-hub-convo-preview"><%= truncate(last.content || "", length: 60) %></span>
+              <% end %>
+            </div>
+            <% if conversation.kind_group? %>
+              <span class="chat-hub-convo-badge">group</span>
+            <% end %>
+          <% end %>
+        <% end %>
+      <% else %>
+        <div class="chat-hub-empty-sidebar">
+          <p>No conversations yet</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# ── Chat Panel ── %>
+  <div class="chat-hub-panel" data-chat-hub-target="panel">
+    <% if @conversation %>
+      <div class="chat-page">
+        <div class="chat-header">
+          <div class="chat-header-left">
+            <button type="button" class="chat-back chat-hub-back-btn" data-action="click->chat-hub#showSidebar">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <%= link_to agent_path(@agent), class: "chat-header-identity", data: { turbo_frame: "_top" } do %>
+              <div class="chat-agent-indicator">
+                <span class="chat-agent-dot"></span>
+              </div>
+              <div>
+                <h1 class="chat-agent-name"><%= @conversation.display_name %><% if @conversation.kind_direct? && @agent.title.present? %> <span class="chat-agent-title">(<%= @agent.title %>)</span><% end %></h1>
+              </div>
+            <% end %>
+          </div>
+          <div class="chat-header-right">
+            <span class="chat-status chat-status-<%= @agent.status %>"><%= @agent.status %></span>
+          </div>
+        </div>
+
+        <% if @conversation.kind_group? %>
+          <div class="chat-participants-bar">
+            <div class="chat-participants-list">
+              <% @conversation.participants.includes(:user).each do |participant| %>
+                <span class="participant-chip">
+                  <%= participant.user.first_name %>
+                  <%= button_to agent_conversation_participant_path(@agent, @conversation, participant), method: :delete, class: "participant-remove", title: "Remove #{participant.user.first_name}" do %>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <% end %>
+                </span>
+              <% end %>
+            </div>
+            <% if @available_users&.any? %>
+              <%= form_with url: agent_conversation_participants_path(@agent, @conversation), class: "participant-add-form" do |f| %>
+                <%= f.select :user_id, @available_users.map { |u| [u.first_name, u.id] }, { prompt: "Add..." }, name: "participant[user_id]", class: "participant-add-select", onchange: "this.form.requestSubmit()" %>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+
+        <div class="chat-thread" id="chat-thread"
+             data-controller="chat-pagination"
+             data-chat-pagination-url-value="<%= agent_conversation_messages_path(@agent, @conversation) %>"
+        >
+          <% if @messages.empty? %>
+            <div class="chat-welcome" id="chat-welcome">
+              <div class="chat-welcome-icon">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <circle cx="16" cy="16" r="12" stroke="currentColor" stroke-width="1.5"/>
+                  <circle cx="16" cy="16" r="3" fill="currentColor"/>
+                  <path d="M16 8V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M16 20V24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M8 16H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M20 16H24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <p class="chat-welcome-text">Begin a conversation with <strong><%= @agent.name %></strong></p>
+            </div>
+          <% end %>
+
+          <div class="chat-messages" id="chat-messages">
+            <% if @has_older %>
+              <div id="chat-pagination-sentinel" data-chat-pagination-target="sentinel"></div>
+            <% end %>
+            <% @messages.each do |message| %>
+              <%= render "agents/conversations/messages/message", message: message, agent: @agent %>
+            <% end %>
+          </div>
+        </div>
+
+        <div id="audio-queue" data-controller="audio-queue" style="display:none"></div>
+
+        <div class="chat-composer<%= " chat-composer-disabled" unless @agent.running? %>">
+          <% unless @agent.running? %>
+            <div class="chat-composer-notice"><%= @agent.name %> is <%= @agent.status %></div>
+          <% end %>
+          <%= form_with url: agent_conversation_messages_path(@agent, @conversation), class: "chat-composer-form", data: { controller: "chat-composer voice-composer mention", mention_names_value: (@conversation.users.pluck(:first_name) + [@agent.name]).to_json, action: "submit->chat-composer#unlockAudio" } do |form| %>
+            <div class="chat-composer-inner">
+              <%= form.text_area :content, name: "message[content]", placeholder: @agent.running? ? "Message #{@agent.name}..." : "#{@agent.name} is #{@agent.status}", rows: 1, autofocus: @agent.running?, disabled: !@agent.running?, class: "chat-composer-input", data: { chat_composer_target: "input", mention_target: "input", action: "keydown->mention#onKeydown keydown->chat-composer#submitOnEnter input->mention#onInput input->chat-composer#autoResize" } %>
+
+              <%= form.hidden_field :tts, name: "tts", value: "0", data: { voice_composer_target: "ttsField" } %>
+              <%= form.file_field :audio, name: "message[audio]", hidden: true, direct_upload: false, data: { voice_composer_target: "audioField" } %>
+
+              <% if @audio_available %>
+                <button type="button" class="chat-composer-btn chat-composer-tts" title="Text-to-speech" data-voice-composer-target="ttsToggle" data-action="click->voice-composer#toggleTts">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                </button>
+
+                <button type="button" class="chat-composer-btn chat-composer-ptt" title="Push to talk" data-voice-composer-target="recordButton" data-action="click->voice-composer#toggleRecord">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                </button>
+              <% end %>
+
+              <button type="submit" class="chat-composer-send" data-chat-composer-target="button">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M3 9L15 3L9 15L8 10L3 9Z" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="chat-hub-empty">
+        <div class="chat-hub-empty-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <path d="M8 10C8 8.89543 8.89543 8 10 8H30C31.1046 8 32 8.89543 32 10V26C32 27.1046 31.1046 28 30 28H22L16 33V28H10C8.89543 28 8 27.1046 8 26V10Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="16" cy="18" r="1.5" fill="currentColor"/>
+            <circle cx="20" cy="18" r="1.5" fill="currentColor"/>
+            <circle cx="24" cy="18" r="1.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <p>Select a conversation to start chatting</p>
+      </div>
+    <% end %>
+  </div>
+</div>

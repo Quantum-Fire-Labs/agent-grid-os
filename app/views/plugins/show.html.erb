@@ -1,0 +1,96 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Plugins", plugins_path %> <span class="breadcrumb-sep">/</span> <span><%= @plugin.name %></span>
+    </div>
+  </div>
+
+  <div class="agent-detail">
+    <div class="agent-detail-header">
+      <div>
+        <h1><%= @plugin.name %></h1>
+        <p class="agent-slug"><%= @plugin.plugin_type %> &middot; v<%= @plugin.version %> &middot; <%= @plugin.execution %></p>
+      </div>
+      <div class="agent-detail-actions">
+        <%= link_to "Configure", plugin_configs_path(@plugin), class: "btn btn-ghost btn-sm" %>
+        <%= button_to "Uninstall", plugin_path(@plugin), method: :delete, class: "btn btn-danger btn-sm", data: { turbo_confirm: "Uninstall #{@plugin.name}? This will disable it for all agents." } %>
+      </div>
+    </div>
+
+    <% if @plugin.description.present? %>
+      <p class="agent-detail-description"><%= @plugin.description %></p>
+    <% end %>
+
+    <% if @plugin.tools.any? %>
+      <div class="agent-detail-section">
+        <h3 class="section-label">Tools</h3>
+        <div class="skills-list">
+          <% @plugin.tools.each do |tool| %>
+            <div class="skill-card">
+              <div class="skill-card-header">
+                <h3 class="skill-name"><%= tool["name"] %></h3>
+              </div>
+              <% if tool["description"].present? %>
+                <p class="skill-description"><%= tool["description"] %></p>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @plugin.config_schema.any? %>
+      <div class="agent-detail-section">
+        <h3 class="section-label">Configuration</h3>
+        <div class="agent-detail-meta">
+          <% @plugin.config_schema.each do |schema| %>
+            <div class="meta-item">
+              <span class="meta-label"><%= schema["label"] || schema["key"] %></span>
+              <span class="meta-value"><%= schema["type"] %><%= " (required)" if schema["required"] %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% network = @plugin.permissions["network"] %>
+    <% if network.present? && network != false %>
+      <div class="agent-detail-section">
+        <h3 class="section-label">Network Requirements</h3>
+        <p class="section-text">
+          <% if network == true %>
+            Full network access required
+          <% elsif network.is_a?(Array) %>
+            Domains: <%= network.join(", ") %>
+          <% end %>
+        </p>
+      </div>
+    <% end %>
+
+    <% if @plugin.agents.any? %>
+      <div class="agent-detail-section">
+        <h3 class="section-label">Enabled Agents</h3>
+        <div class="agent-detail-meta">
+          <% @plugin.agents.each do |agent| %>
+            <div class="meta-item">
+              <span class="meta-value"><%= link_to agent.name, agent_path(agent) %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="agent-detail-meta">
+      <div class="meta-item">
+        <span class="meta-label">Installed</span>
+        <span class="meta-value"><%= @plugin.created_at.strftime("%b %-d, %Y") %></span>
+      </div>
+      <% if @plugin.packages.any? %>
+        <div class="meta-item">
+          <span class="meta-label">Packages</span>
+          <span class="meta-value"><%= @plugin.packages.join(", ") %></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

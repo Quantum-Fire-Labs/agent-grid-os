@@ -1,0 +1,53 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Plugins", plugins_path %> <span class="breadcrumb-sep">/</span> <%= link_to @plugin.name, plugin_path(@plugin) %> <span class="breadcrumb-sep">/</span> <span>Configuration</span>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-header">
+      <h1>Configure <%= @plugin.name %></h1>
+      <p class="form-card-subtitle">Global configuration values. Agents can override these with their own values.</p>
+    </div>
+
+    <% if @plugin.config_schema.any? %>
+      <div class="form-body">
+        <% @plugin.config_schema.each do |schema| %>
+          <% existing = @configs.find { |c| c.key == schema["key"] } %>
+          <%= form_with url: (existing ? plugin_config_path(@plugin, existing) : plugin_configs_path(@plugin)),
+                        method: (existing ? :patch : :post),
+                        class: "form-group form-inline" do |form| %>
+            <%= form.label :value, schema["label"] || schema["key"] %>
+            <% if existing %>
+              <%= form.hidden_field :key, value: schema["key"] %>
+            <% else %>
+              <input type="hidden" name="key" value="<%= schema["key"] %>">
+            <% end %>
+            <div class="form-inline-fields">
+              <% if schema["type"] == "secret" %>
+                <input type="password" name="value" value="<%= existing&.value %>" placeholder="<%= schema["required"] ? "Required" : "Optional" %>">
+              <% elsif schema["type"] == "boolean" %>
+                <select name="value">
+                  <option value="">--</option>
+                  <option value="true" <%= "selected" if existing&.value == "true" %>>true</option>
+                  <option value="false" <%= "selected" if existing&.value == "false" %>>false</option>
+                </select>
+              <% else %>
+                <input type="text" name="value" value="<%= existing&.value %>" placeholder="<%= schema["required"] ? "Required" : "Optional" %>">
+              <% end %>
+              <%= form.submit "Save", class: "btn btn-primary btn-sm" %>
+              <% if existing %>
+                <%= button_to "Remove", plugin_config_path(@plugin, existing), method: :delete, class: "btn btn-ghost btn-sm" %>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <p>This plugin has no configuration options.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

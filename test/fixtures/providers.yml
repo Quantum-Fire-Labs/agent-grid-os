@@ -1,0 +1,23 @@
+one:
+  account: one
+  name: openrouter
+  model: openai/gpt-4o-mini
+  designation: default
+
+two:
+  account: two
+  name: openrouter
+  model: openai/gpt-4o-mini
+  designation: default
+
+openai:
+  account: one
+  name: openai
+  model: gpt-4o-mini
+  designation: none
+
+chatgpt:
+  account: one
+  name: chatgpt
+  model: gpt-4o
+  designation: none
