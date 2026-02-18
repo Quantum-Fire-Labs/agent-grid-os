@@ -1,0 +1,70 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <span><%= @agent.name %></span>
+    </div>
+  </div>
+
+  <%= turbo_frame_tag @agent do %>
+    <div class="agent-detail">
+      <div class="agent-detail-header">
+        <div>
+          <h1><%= @agent.name %></h1>
+          <% if @agent.title.present? %>
+            <p class="agent-slug"><%= @agent.title %></p>
+          <% end %>
+        </div>
+        <div class="agent-detail-actions">
+          <span class="agent-status status-<%= @agent.status %>"><%= @agent.status %></span>
+          <% if @agent.running? %>
+            <%= link_to "Chat", chat_path(@agent.conversations.find_or_create_direct(Current.user)), class: "btn btn-primary btn-sm", data: { turbo_frame: "_top" } %>
+          <% end %>
+          <% if @agent.asleep? %>
+            <%= button_to "Awaken", agent_awakening_path(@agent), class: "btn btn-primary btn-sm" %>
+          <% elsif @agent.running? %>
+            <%= button_to "Reboot", agent_awakening_path(@agent), method: :patch, class: "btn btn-ghost btn-sm" %>
+            <%= button_to "Sleep", agent_awakening_path(@agent), method: :delete, class: "btn btn-ghost btn-sm" %>
+          <% end %>
+        </div>
+      </div>
+
+      <% if @agent.description.present? %>
+        <p class="agent-detail-description"><%= @agent.description %></p>
+      <% end %>
+
+      <% if @agent.personality.present? %>
+        <div class="agent-detail-section">
+          <h3 class="section-label">Personality</h3>
+          <p class="section-text"><%= @agent.personality %></p>
+        </div>
+      <% end %>
+
+      <div class="agent-detail-meta">
+        <div class="meta-item">
+          <span class="meta-label">Network mode</span>
+          <span class="meta-value"><%= @agent.network_mode || "none" %></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Created</span>
+          <span class="meta-value"><%= @agent.created_at.strftime("%b %-d, %Y") %></span>
+        </div>
+      </div>
+
+      <div class="agent-detail-actions-secondary">
+        <%= link_to "Conversations", chats_path, class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
+        <% if Current.user.admin? %>
+          <%= link_to "Users", agent_users_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
+          <%= link_to "Plugins", agent_plugins_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
+          <%= link_to "Models", agent_models_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
+          <%= link_to "Memories", agent_memories_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
+          <% if @agent.workspace_enabled? %>
+            <%= link_to "Terminal", agent_terminal_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
+          <% end %>
+          <%= link_to "Settings", agent_settings_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
+          <%= link_to "Edit", edit_agent_path(@agent), class: "btn btn-ghost btn-sm" %>
+          <%= button_to "Delete", agent_path(@agent), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Delete #{@agent.name}? This cannot be undone." } %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

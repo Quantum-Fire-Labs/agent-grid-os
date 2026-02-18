@@ -1,0 +1,69 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <%= link_to @agent.name, agent_path(@agent) %> <span class="breadcrumb-sep">/</span> <span>Models</span>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-header">
+      <h2 class="settings-section-title">Models</h2>
+    </div>
+
+    <% if @agent_models.any? %>
+      <div class="provider-list">
+        <% @agent_models.each do |am| %>
+          <% provider = am.provider %>
+          <div class="provider-row">
+            <div class="provider-info">
+              <span class="provider-name"><%= provider.display_name %></span>
+              <span class="provider-model"><%= am.model %></span>
+              <% if provider.connected?(agent: @agent) %>
+                <span class="provider-badge-connected">Connected</span>
+              <% end %>
+            </div>
+            <div class="provider-meta">
+              <% if am.designation_default? %>
+                <span class="provider-badge">Default</span>
+              <% elsif am.designation_fallback? %>
+                <span class="provider-badge provider-badge-secondary">Fallback</span>
+              <% end %>
+              <div class="provider-actions">
+                <% unless am.designation_default? %>
+                  <%= button_to "Make default", agent_model_path(@agent, am), method: :patch, params: { designation: "default" }, class: "btn btn-ghost btn-xs" %>
+                <% end %>
+                <%= button_to "Remove", agent_model_path(@agent, am), method: :delete, class: "btn btn-ghost btn-xs text-danger", data: { turbo_confirm: "Remove this model?" } %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="settings-empty">No models configured. This agent inherits models from the account.</p>
+    <% end %>
+  </div>
+
+  <% if @available_providers.any? %>
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <h2 class="settings-section-title">Available Providers</h2>
+      </div>
+
+      <div class="provider-list">
+        <% @available_providers.each do |provider| %>
+          <div class="provider-row">
+            <div class="provider-info">
+              <span class="provider-name"><%= provider.display_name %></span>
+              <span class="provider-model"><%= provider.model %></span>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-actions">
+                <%= button_to "Add", agent_models_path(@agent), params: { provider_id: provider.id }, class: "btn btn-ghost btn-xs" %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

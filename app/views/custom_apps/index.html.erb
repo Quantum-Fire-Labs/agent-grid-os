@@ -1,0 +1,39 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <h1>Apps</h1>
+  </div>
+
+  <% if @custom_apps.any? %>
+    <div class="apps-grid">
+      <% @custom_apps.each do |app| %>
+        <div class="app-card">
+          <%= link_to custom_app_path(app), class: "app-card-link" do %>
+            <div class="app-card-icon">
+              <% if app.icon_display == :image %>
+                <%= image_tag app.icon_image, class: "app-card-icon-img" %>
+              <% elsif app.icon_display == :emoji %>
+                <span class="app-card-icon-emoji"><%= app.icon_emoji %></span>
+              <% else %>
+                <span class="app-card-icon-initial"><%= app.name.first.upcase %></span>
+              <% end %>
+            </div>
+            <div class="app-card-body">
+              <h3 class="app-card-name"><%= app.name %></h3>
+              <% if app.description.present? %>
+                <p class="app-card-description"><%= truncate(app.description, length: 120) %></p>
+              <% end %>
+            </div>
+          <% end %>
+          <div class="app-card-footer">
+            <span class="app-card-agent"><%= app.agent.name %></span>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <h2>No apps yet</h2>
+      <p>Apps will appear here when your agents build and register them.</p>
+    </div>
+  <% end %>
+</div>

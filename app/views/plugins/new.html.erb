@@ -1,0 +1,31 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Plugins", plugins_path %> <span class="breadcrumb-sep">/</span> <span>Available plugins</span>
+    </div>
+  </div>
+
+  <% if @available.any? %>
+    <div class="skills-list">
+      <% @available.each do |manifest| %>
+        <div class="skill-card">
+          <div class="skill-card-header">
+            <h3 class="skill-name"><%= manifest["name"] %></h3>
+            <span class="badge"><%= manifest["type"] || "tool" %></span>
+          </div>
+          <% if manifest["description"].present? %>
+            <p class="skill-description"><%= manifest["description"] %></p>
+          <% end %>
+          <div class="form-actions">
+            <%= button_to "Install", plugins_path(source_path: manifest["source_path"]), class: "btn btn-primary" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <h2>No plugins available</h2>
+      <p>All bundled plugins are already installed.</p>
+    </div>
+  <% end %>
+</div>

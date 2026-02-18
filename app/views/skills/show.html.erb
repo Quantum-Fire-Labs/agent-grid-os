@@ -1,0 +1,39 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Skills", skills_path %> <span class="breadcrumb-sep">/</span> <span><%= @skill.name %></span>
+    </div>
+  </div>
+
+  <%= turbo_frame_tag @skill do %>
+    <div class="agent-detail">
+      <div class="agent-detail-header">
+        <div>
+          <h1><%= @skill.name %></h1>
+        </div>
+        <div class="agent-detail-actions">
+          <%= link_to "Edit", edit_skill_path(@skill), class: "btn btn-ghost btn-sm" %>
+          <%= button_to "Delete", skill_path(@skill), method: :delete, class: "btn btn-danger btn-sm", data: { turbo_confirm: "Delete #{@skill.name}? This cannot be undone." } %>
+        </div>
+      </div>
+
+      <% if @skill.description.present? %>
+        <p class="agent-detail-description"><%= @skill.description %></p>
+      <% end %>
+
+      <% if @skill.body.present? %>
+        <div class="agent-detail-section">
+          <h3 class="section-label">Instructions</h3>
+          <pre class="skill-body"><%= @skill.body %></pre>
+        </div>
+      <% end %>
+
+      <div class="agent-detail-meta">
+        <div class="meta-item">
+          <span class="meta-label">Created</span>
+          <span class="meta-value"><%= @skill.created_at.strftime("%b %-d, %Y") %></span>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,146 @@
+<%= render "settings/layout" do %>
+  <%= form_with url: settings_voice_path, method: :patch, class: "settings-form",
+    data: { controller: "voice-settings" } do |form| %>
+    <%# ── Text-to-Speech ── %>
+    <div class="settings-section">
+      <h2 class="settings-section-title">Text-to-Speech</h2>
+
+      <div class="form-group">
+        <%= form.label :tts_provider, "Default TTS provider" %>
+        <%= form.select :tts_provider,
+          options_for_select([["OpenAI", "openai"], ["ElevenLabs", "elevenlabs"]], @tts_provider),
+          {}, { name: "voice_settings[tts_provider]", class: "form-select",
+                data: { action: "change->voice-settings#submitForm" } } %>
+      </div>
+
+      <% if @tts_provider == "elevenlabs" %>
+        <div class="form-group">
+          <%= form.label :elevenlabs_model, "Model" %>
+          <%= form.select :elevenlabs_model,
+            options_for_select(
+              Agent::Audio::ElevenlabsTts::MODELS.map { |id, info|
+                ["#{info[:name]} — #{info[:desc]}", id]
+              },
+              @elevenlabs_model
+            ),
+            {}, { name: "voice_settings[elevenlabs_model]", class: "form-select",
+                  data: { action: "change->voice-settings#submitForm" } } %>
+        </div>
+      <% end %>
+
+      <div class="form-group">
+        <%= form.label :voice, "Default voice" %>
+        <% if @voices.any? %>
+          <div class="voice-options">
+            <% @voices.each do |voice| %>
+              <label class="voice-option <%= 'voice-option-selected' if voice[:id] == @voice %>">
+                <%= form.radio_button :voice, voice[:id], name: "voice_settings[voice]", id: "voice_#{voice[:id]}", checked: voice[:id] == @voice %>
+                <span class="voice-option-name"><%= voice[:name] %></span>
+                <% if voice[:labels].present? %>
+                  <span class="voice-option-label"><%= [voice[:labels]["gender"], voice[:labels]["accent"]].compact.join(", ") %></span>
+                <% end %>
+                <% if voice[:preview_url] %>
+                  <button type="button" class="voice-preview-btn" title="Preview voice"
+                    data-controller="voice-preview"
+                    data-voice-preview-url-value="<%= voice[:preview_url] %>"
+                    data-action="click->voice-preview#toggle">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  </button>
+                <% end %>
+              </label>
+            <% end %>
+          </div>
+        <% else %>
+          <%= form.select :voice,
+            options_for_select(Agent::Audio.voices_for(@tts_provider).map { |v| [v.capitalize, v] }, @voice),
+            { include_blank: "Provider default" },
+            { name: "voice_settings[voice]", class: "form-select" } %>
+        <% end %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :tts_speed, "Speaking speed" %>
+        <div class="range-with-value">
+          <%= form.range_field :tts_speed,
+            min: @tts_provider == "elevenlabs" ? 0.7 : 0.25,
+            max: @tts_provider == "elevenlabs" ? 1.2 : 4.0,
+            step: 0.05,
+            value: @tts_speed,
+            name: "voice_settings[tts_speed]",
+            data: { action: "input->voice-settings#updateSpeed" } %>
+          <span class="range-value" data-voice-settings-target="speedValue"><%= format("%.2f", @tts_speed) %></span>
+        </div>
+        <p class="form-hint">1.00 is normal speed. <%= @tts_provider == "elevenlabs" ? "Range: 0.70–1.20" : "Range: 0.25–4.00" %></p>
+      </div>
+    </div>
+
+    <%# ── API Keys ── %>
+    <div class="settings-section">
+      <h2 class="settings-section-title">API Keys</h2>
+
+      <fieldset class="settings-subsection">
+        <legend>OpenAI</legend>
+        <div class="form-group">
+          <% if @openai_connected %>
+            <span class="provider-badge-connected">Connected</span>
+            <p class="form-hint">API key configured via <%= link_to "Providers", settings_providers_path %>.</p>
+          <% else %>
+            <%= form.label :openai_api_key, "API key" %>
+            <%= form.password_field :openai_api_key,
+              value: "", placeholder: "sk-...",
+              name: "voice_settings[openai_api_key]", autocomplete: "off" %>
+            <p class="form-hint">Required for OpenAI TTS and Whisper transcription.</p>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <fieldset class="settings-subsection">
+        <legend>ElevenLabs</legend>
+        <div class="form-group">
+          <% if @elevenlabs_connected %>
+            <span class="provider-badge-connected">Connected</span>
+          <% end %>
+          <%= form.label :elevenlabs_api_key, "API key" %>
+          <%= form.password_field :elevenlabs_api_key,
+            value: "", placeholder: @elevenlabs_connected ? "••••••••  (leave blank to keep)" : "xi-...",
+            name: "voice_settings[elevenlabs_api_key]", autocomplete: "off" %>
+          <p class="form-hint">Get your API key from <a href="https://elevenlabs.io" target="_blank" rel="noopener">elevenlabs.io</a>.</p>
+        </div>
+      </fieldset>
+    </div>
+
+    <%# ── Speech-to-Text ── %>
+    <div class="settings-section">
+      <h2 class="settings-section-title">Speech-to-Text</h2>
+
+      <div class="form-group">
+        <%= form.label :stt_provider, "Default STT provider" %>
+        <%= form.select :stt_provider,
+          options_for_select([
+            ["OpenAI Whisper", "openai"],
+            ["Local Whisper#{' (not installed)' unless @local_whisper_available}", "local"]
+          ], @stt_provider),
+          {}, { name: "voice_settings[stt_provider]", class: "form-select",
+                data: { action: "change->voice-settings#toggleWhisperModel" } } %>
+        <% unless @local_whisper_available %>
+          <p class="form-hint">Install whisper.cpp for local transcription: <code>pacman -S whisper.cpp</code></p>
+        <% end %>
+      </div>
+
+      <div class="form-group" data-voice-settings-target="whisperModel" <%= "hidden" unless @stt_provider == "local" %>>
+        <%= form.label :whisper_model, "Whisper model" %>
+        <%= form.select :whisper_model,
+          options_for_select([
+            ["Base English (fastest)", "base.en"],
+            ["Small English (balanced)", "small.en"],
+            ["Medium English (best quality)", "medium.en"]
+          ], @whisper_model),
+          {}, { name: "voice_settings[whisper_model]", class: "form-select" } %>
+      </div>
+    </div>
+
+    <div class="form-actions-inline">
+      <%= form.submit "Save", class: "btn btn-primary btn-sm" %>
+    </div>
+  <% end %>
+<% end %>

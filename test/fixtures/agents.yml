@@ -1,0 +1,15 @@
+one:
+  account: one
+  name: Atlas
+  title: Research Assistant
+  description: Helps with research
+  status: asleep
+  network_mode: none
+
+two:
+  account: two
+  name: Beacon
+  title: Helper Bot
+  description: General assistant
+  status: asleep
+  network_mode: none

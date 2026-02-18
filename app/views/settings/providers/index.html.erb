@@ -1,0 +1,37 @@
+<%= render "settings/layout" do %>
+  <div class="settings-section">
+    <div class="settings-section-header">
+      <h2 class="settings-section-title">Providers</h2>
+      <%= link_to "Add provider", new_settings_provider_path, class: "btn btn-primary btn-sm" %>
+    </div>
+
+    <% if @providers.any? %>
+      <div class="provider-list">
+        <% @providers.each do |provider| %>
+          <div class="provider-row">
+            <div class="provider-info">
+              <span class="provider-name"><%= provider.display_name %></span>
+              <span class="provider-model"><%= provider.model %></span>
+              <% if provider.connected? %>
+                <span class="provider-badge-connected">Connected</span>
+              <% end %>
+            </div>
+            <div class="provider-meta">
+              <% if provider.designation_default? %>
+                <span class="provider-badge">Default</span>
+              <% elsif provider.designation_fallback? %>
+                <span class="provider-badge provider-badge-secondary">Fallback</span>
+              <% end %>
+              <div class="provider-actions">
+                <%= link_to "Edit", edit_settings_provider_path(provider), class: "btn btn-ghost btn-xs" %>
+                <%= button_to "Remove", settings_provider_path(provider), method: :delete, class: "btn btn-ghost btn-xs text-danger", data: { turbo_confirm: "Remove this provider?" } %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="settings-empty">No providers configured. Add one to start using AI agents.</p>
+    <% end %>
+  </div>
+<% end %>

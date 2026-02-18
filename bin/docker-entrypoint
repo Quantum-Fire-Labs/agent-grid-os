@@ -1,0 +1,15 @@
+#!/bin/bash -e
+
+# If running the rails server then prepare database and run first-boot setup
+if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+  # Generate production credentials on first boot (before Rails loads)
+  if [ ! -f config/credentials/production.yml.enc ]; then
+    bundle exec ruby bin/generate-credentials
+    echo "Production credentials generated."
+  fi
+
+  ./bin/rails db:prepare
+  ./bin/rails grid:setup
+fi
+
+exec "${@}"

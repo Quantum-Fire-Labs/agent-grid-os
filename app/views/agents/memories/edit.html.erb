@@ -1,0 +1,23 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <%= link_to @agent.name, agent_path(@agent) %> <span class="breadcrumb-sep">/</span> <%= link_to "Memories", agent_memories_path(@agent) %> <span class="breadcrumb-sep">/</span> <span>Edit</span>
+    </div>
+  </div>
+
+  <%= turbo_frame_tag @memory do %>
+    <div class="agent-detail">
+      <%= form_with model: [@agent, @memory], data: { turbo_frame: "_top" } do |form| %>
+        <div class="form-group">
+          <%= form.label :content %>
+          <%= form.textarea :content, rows: 8 %>
+        </div>
+
+        <div class="form-actions-inline">
+          <%= form.submit "Save", class: "btn btn-primary btn-sm" %>
+          <%= link_to "Cancel", agent_memories_path(@agent), class: "btn btn-ghost btn-sm" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= @custom_app.name %> — AgentGridOS</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+
+    <script src="/agentgridos_app_sdk.js"
+      data-app-id="<%= @custom_app.id %>"
+      data-app-name="<%= @custom_app.name %>"
+      data-user-id="<%= Current.user.id %>"
+      data-user-name="<%= Current.user.first_name %>"></script>
+  </head>
+
+  <body>
+    <nav class="top-nav" data-controller="mobile-nav" data-action="keydown@window->mobile-nav#closeOnEscape">
+      <div class="top-nav-inner">
+        <%= link_to root_path, class: "nav-logo" do %>
+          <%= image_tag "logo-lightmode.png", alt: "AgentGridOS", class: "nav-logo-img nav-logo-light" %>
+          <%= image_tag "logo-darkmode.png", alt: "AgentGridOS", class: "nav-logo-img nav-logo-dark" %>
+        <% end %>
+        <div class="nav-links" data-mobile-nav-target="menu">
+          <%= link_to "Chat", chats_path, class: "nav-link" %>
+          <%= link_to "Agents", agents_path, class: "nav-link" %>
+          <%= link_to "Apps", custom_apps_path, class: "nav-link nav-link-active" %>
+          <% if Current.user.admin? %>
+            <%= link_to "Skills", skills_path, class: "nav-link" %>
+            <%= link_to "Plugins", plugins_path, class: "nav-link" %>
+          <% end %>
+          <%= link_to "Settings", settings_path, class: "nav-link" %>
+        </div>
+        <button type="button" class="nav-hamburger" data-action="click->mobile-nav#toggle" aria-label="Toggle navigation">
+          <span class="nav-hamburger-line"></span>
+          <span class="nav-hamburger-line"></span>
+          <span class="nav-hamburger-line"></span>
+        </button>
+      </div>
+      <div class="nav-overlay" data-mobile-nav-target="overlay" data-action="click->mobile-nav#close"></div>
+    </nav>
+
+    <main class="app-container">
+      <%= yield %>
+    </main>
+  </body>
+</html>

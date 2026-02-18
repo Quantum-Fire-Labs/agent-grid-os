@@ -1,0 +1,16 @@
+<%= render "settings/layout" do %>
+  <div class="settings-section">
+    <h2 class="settings-section-title">Account</h2>
+
+    <%= form_with model: Current.account, url: settings_account_path, method: :patch, class: "settings-form", data: { turbo_frame: "_top" } do |form| %>
+      <div class="form-group">
+        <%= form.label :name, "Account name" %>
+        <%= form.text_field :name, required: true %>
+      </div>
+
+      <div class="form-actions-inline">
+        <%= form.submit "Update account", class: "btn btn-primary btn-sm" %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

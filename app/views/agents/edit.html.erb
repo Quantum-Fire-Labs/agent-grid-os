@@ -1,0 +1,49 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <span><%= @agent.name %></span>
+    </div>
+  </div>
+
+  <%= turbo_frame_tag @agent do %>
+    <div class="agent-detail">
+      <% if @agent.errors.any? %>
+        <div class="flash flash-alert">
+          <%= @agent.errors.full_messages.to_sentence %>
+        </div>
+      <% end %>
+
+      <%= form_with model: @agent do |form| %>
+        <div class="form-group">
+          <%= form.label :name %>
+          <%= form.text_field :name %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :title, "Title / role" %>
+          <%= form.text_field :title, placeholder: "e.g. the DJ, research assistant" %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :description %>
+          <%= form.textarea :description, rows: 3, placeholder: "What does this agent do?" %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :personality %>
+          <%= form.textarea :personality, rows: 3 %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :network_mode, "Network mode" %>
+          <%= form.select :network_mode, Agent.network_modes.keys, {} %>
+        </div>
+
+        <div class="form-actions-inline">
+          <%= form.submit "Save", class: "btn btn-primary btn-sm" %>
+          <%= link_to "Cancel", agent_path(@agent), class: "btn btn-ghost btn-sm" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

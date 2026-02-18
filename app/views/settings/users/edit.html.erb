@@ -1,0 +1,61 @@
+<%= render "settings/layout" do %>
+  <div class="settings-section settings-section-wide">
+    <div class="user-form-header">
+      <div class="user-avatar"><%= @user.first_name[0] %><%= @user.last_name[0] %></div>
+      <div>
+        <h2 class="settings-section-title">Edit user</h2>
+        <span class="user-form-subtitle"><%= @user.email_address %></span>
+      </div>
+    </div>
+
+    <%= form_with model: @user, url: settings_user_path(@user), method: :patch, class: "settings-form", data: { turbo_frame: "_top" } do |form| %>
+      <% if @user.errors.any? %>
+        <div class="form-errors">
+          <% @user.errors.full_messages.each do |message| %>
+            <p><%= message %></p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="form-row">
+        <div class="form-group">
+          <%= form.label :first_name %>
+          <%= form.text_field :first_name, required: true %>
+        </div>
+        <div class="form-group">
+          <%= form.label :last_name %>
+          <%= form.text_field :last_name, required: true %>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <%= form.label :email_address %>
+          <%= form.email_field :email_address, required: true %>
+        </div>
+        <div class="form-group">
+          <%= form.label :role %>
+          <%= form.select :role, User.roles.keys.map { |r| [r.capitalize, r] }, {}, { class: "form-select" } %>
+        </div>
+      </div>
+
+      <div class="form-divider"></div>
+
+      <div class="form-group">
+        <%= form.label :password %>
+        <%= form.password_field :password, placeholder: "Leave blank to keep current" %>
+        <span class="form-hint">Only fill this in if you want to change the password.</span>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :password_confirmation %>
+        <%= form.password_field :password_confirmation %>
+      </div>
+
+      <div class="form-actions-inline">
+        <%= form.submit "Update user", class: "btn btn-primary btn-sm" %>
+        <%= link_to "Cancel", settings_user_path(@user), class: "btn btn-ghost btn-sm" %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

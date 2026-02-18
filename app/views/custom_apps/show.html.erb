@@ -1,0 +1,8 @@
+<% if @content %>
+  <%= raw @content %>
+<% else %>
+  <div class="empty-state">
+    <h2>App not found</h2>
+    <p>The app's entrypoint file could not be loaded. The agent may need to rebuild it.</p>
+  </div>
+<% end %>

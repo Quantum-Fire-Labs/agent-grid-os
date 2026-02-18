@@ -1,0 +1,124 @@
+name: claude-code
+type: tool
+version: 1.0.0
+description: "Use Claude Code for complex coding tasks in the workspace"
+execution: sandbox
+entrypoint: null
+
+tools:
+  - name: claude_code
+    description: "Delegate a coding task to Claude Code. Runs asynchronously — returns immediately and delivers the result when done."
+    async: true
+    timeout: 600
+    command: "claude -p {prompt} --dangerously-skip-permissions --output-format text"
+    flags:
+      continue: "-c"
+      session_id: "-r {session_id}"
+    parameters:
+      type: object
+      properties:
+        prompt:
+          type: string
+          description: "The task for Claude Code"
+        continue:
+          type: boolean
+          description: "Continue the most recent session"
+        session_id:
+          type: string
+          description: "Resume a specific session by ID"
+      required:
+        - prompt
+
+permissions:
+  network: true
+
+packages: []
+
+config:
+  - key: ANTHROPIC_API_KEY
+    type: secret
+    required: false
+    label: "Anthropic API Key (optional — use subscription login instead)"
+
+instructions: |
+  # Claude Code
+
+  You have Claude Code available via the `claude_code` tool. Use it for complex coding tasks in your workspace.
+
+  ## Usage
+
+  Call the `claude_code` tool directly. It runs asynchronously — you'll get an immediate confirmation, then the result is delivered when Claude Code finishes.
+
+  ```
+  Tool: claude_code
+  Arguments:
+    prompt: "your task description here"
+  ```
+
+  All work happens in `/workspace`. Claude Code can read, write, and execute code there.
+
+  ## Sessions
+
+  Claude Code supports sessions that preserve context across multiple invocations.
+
+  **Continue the most recent session:**
+  ```
+  Tool: claude_code
+  Arguments:
+    prompt: "now add tests for what you just built"
+    continue: true
+  ```
+
+  **Resume a specific session by ID:**
+  ```
+  Tool: claude_code
+  Arguments:
+    prompt: "continue working on the API"
+    session_id: "SESSION_ID"
+  ```
+
+  The session ID is included in the result output.
+
+  ### When to use sessions
+
+  - **Multi-step builds**: Start a project, then iterate with `continue: true` to add features, fix bugs, or refine
+  - **Debugging**: If the first attempt doesn't fix an issue, continue so Claude Code retains context
+  - **Large features**: Break work into stages — scaffold, add logic, then tests — each continuing the same session
+
+  ### When to start fresh
+
+  - Unrelated tasks — don't carry stale context
+  - When a session gets confused — start clean
+
+  ## When to Use Claude Code
+
+  - Complex multi-file refactoring
+  - Writing or fixing tests
+  - Debugging tricky issues
+  - Building new features from a description
+  - Code review and suggestions
+  - Any task that benefits from reading, understanding, and modifying multiple files
+
+  ## Async behavior
+
+  After calling `claude_code`, tell the user the task is in progress. Once claude_code has completed, it will provide you with a system message containing the result. You can carry on conversing with the user in the meantime or performing any other tasks. Do not poll or check the workspace for results yourself.
+
+  ## Tips
+
+  - Be specific in your prompts — describe what you want changed and where
+  - Claude Code can read the existing files to understand context
+  - Use `continue: true` to continue iterating rather than re-explaining context
+  - For large tasks, break them into steps and use sessions to maintain continuity
+
+setup:
+  command: curl -fsSL https://claude.ai/install.sh | bash && export PATH=$HOME/.local/bin:$PATH && claude
+  instructions: |
+    Install and authenticate Claude Code:
+
+    ```
+    curl -fsSL https://claude.ai/install.sh | bash
+    export PATH=$HOME/.local/bin:$PATH
+    claude
+    ```
+
+    Follow the prompts to authenticate. The button below runs this automatically.

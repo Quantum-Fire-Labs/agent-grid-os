@@ -1,0 +1,26 @@
+slideshow:
+  agent: one
+  account: one
+  name: slideshow
+  description: A presentation builder
+  path: apps/slideshow
+  entrypoint: index.html
+  status: published
+
+draft_app:
+  agent: one
+  account: one
+  name: draft-app
+  description: A draft app
+  path: apps/draft
+  entrypoint: index.html
+  status: draft
+
+other_account_app:
+  agent: two
+  account: two
+  name: other-app
+  description: App in another account
+  path: apps/other
+  entrypoint: index.html
+  status: published

@@ -1,0 +1,44 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <%= link_to @agent.name, agent_path(@agent) %> <span class="breadcrumb-sep">/</span> <span>Memories</span>
+    </div>
+  </div>
+
+  <div class="agent-detail-section">
+    <div class="memory-toolbar">
+      <h3 class="section-label">Memories (<%= @memories.size %>)</h3>
+      <%= form_with url: agent_memories_path(@agent), method: :get, class: "search-form", data: { turbo_frame: "_top" } do |f| %>
+        <%= f.search_field :q, value: params[:q], placeholder: "Search memories…", class: "search-input" %>
+      <% end %>
+    </div>
+
+    <% if @memories.any? %>
+      <div class="skills-list">
+        <% @memories.each do |memory| %>
+          <div class="memory-card">
+            <div class="memory-content"><%= simple_format(truncate(memory.content, length: 300)) %></div>
+            <div class="memory-meta">
+              <span class="memory-state memory-state-<%= memory.state %>"><%= memory.state %></span>
+              <span class="meta-label">Importance: <%= memory.importance %></span>
+              <span class="meta-label">Accessed: <%= memory.access_count %> times</span>
+              <% if memory.last_accessed_at.present? %>
+                <span class="meta-label">Last: <%= time_ago_in_words(memory.last_accessed_at) %> ago</span>
+              <% end %>
+              <span class="meta-label">Created: <%= memory.created_at.strftime("%b %-d, %Y") %></span>
+            </div>
+            <div class="skill-card-actions">
+              <%= link_to "Edit", edit_agent_memory_path(@agent, memory), class: "btn btn-ghost btn-sm" %>
+              <%= button_to "Delete", agent_memory_path(@agent, memory), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Delete this memory?" } %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <h2>No memories</h2>
+        <p><%= params[:q].present? ? "No memories match your search." : "This agent hasn't stored any memories yet." %></p>
+      </div>
+    <% end %>
+  </div>
+</div>

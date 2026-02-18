@@ -1,0 +1,19 @@
+openrouter:
+  owner: one (Account)
+  name: openrouter
+  secrets: '{"api_key": "sk-test-123"}'
+
+openrouter_two:
+  owner: two (Account)
+  name: openrouter
+  secrets: '{"api_key": "sk-test-456"}'
+
+openai:
+  owner: one (Account)
+  name: openai
+  secrets: '{"api_key": "sk-test-openai-789"}'
+
+chatgpt:
+  owner: one (Account)
+  name: chatgpt
+  secrets: '{"access_token": "test-access-token", "oauth_account_id": "test-account-id"}'

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "AgentGridOS" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="AgentGridOS">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+    <meta name="theme-color" content="#c47a2a" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#d4943a" media="(prefers-color-scheme: dark)">
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <% if authenticated? %>
+      <nav class="top-nav" data-controller="mobile-nav" data-action="keydown@window->mobile-nav#closeOnEscape">
+        <div class="top-nav-inner">
+          <%= link_to root_path, class: "nav-logo" do %>
+            <%= image_tag "logo-lightmode.png", alt: "AgentGridOS", class: "nav-logo-img nav-logo-light" %>
+            <%= image_tag "logo-darkmode.png", alt: "AgentGridOS", class: "nav-logo-img nav-logo-dark" %>
+          <% end %>
+          <div class="nav-links" data-mobile-nav-target="menu">
+            <%= link_to "Chat", chats_path, class: "nav-link #{"nav-link-active" if controller_name == "chats"}" %>
+            <%= link_to "Agents", agents_path, class: "nav-link #{"nav-link-active" if controller_name == "agents"}" %>
+            <%= link_to "Apps", custom_apps_path, class: "nav-link #{"nav-link-active" if controller_name == "custom_apps"}" %>
+            <% if Current.user.admin? %>
+              <%= link_to "Skills", skills_path, class: "nav-link #{"nav-link-active" if controller_name == "skills"}" %>
+              <%= link_to "Plugins", plugins_path, class: "nav-link #{"nav-link-active" if controller_name == "plugins"}" %>
+            <% end %>
+            <%= link_to "Settings", settings_path, class: "nav-link #{"nav-link-active" if controller_path.start_with?("settings")}" %>
+          </div>
+          <button type="button" class="nav-hamburger" data-action="click->mobile-nav#toggle" aria-label="Toggle navigation">
+            <span class="nav-hamburger-line"></span>
+            <span class="nav-hamburger-line"></span>
+            <span class="nav-hamburger-line"></span>
+          </button>
+        </div>
+        <div class="nav-overlay" data-mobile-nav-target="overlay" data-action="click->mobile-nav#close"></div>
+      </nav>
+    <% end %>
+
+    <main class="main-content">
+      <% if flash[:notice] %>
+        <div class="flash flash-notice"><%= flash[:notice] %></div>
+      <% end %>
+      <% if flash[:alert] %>
+        <div class="flash flash-alert"><%= flash[:alert] %></div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+  </body>
+</html>

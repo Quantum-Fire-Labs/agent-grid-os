@@ -1,0 +1,31 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "25280a1c1b5fc881812e21152a70e45e563794c8b5f738104b25b77a47972144",
+      "code": "File.read(Agent::Workspace.new(agent).path.join(arguments[\"path\"]))",
+      "note": "Safe: path validated against traversal (rejects absolute, .., and escapes)"
+    },
+    {
+      "fingerprint": "8fb2528b31e9d04360923fdd35558e6f068b2430abe72aeb28699b31468c8247",
+      "code": "FileUtils.rm_rf(Current.account.plugins.find(params[:id]).path)",
+      "note": "Safe: path derived from database ID (storage/plugins/{id}), not user input"
+    },
+    {
+      "fingerprint": "3f3cc4472f377db5d3f2d0718e2769edeeb3d13f2214021ffbe6cbf0a2d7c168",
+      "code": "File.open(Agent::Workspace.new(agent).path.join(arguments[\"icon_path\"]))",
+      "note": "Safe: icon_path is within the agent's sandboxed workspace directory"
+    },
+    {
+      "fingerprint": "844cb17e458a2406ae18dd5ed91295864d347fdb1e637713d0558283e9108a52",
+      "code": "CustomApp.published.where(:agent => accessible_agents).find(params[:id]).entrypoint_content",
+      "note": "Intentional: custom apps serve agent-authored HTML by design"
+    },
+    {
+      "fingerprint": "8a1c67f803095bfd9bb2aa83aa703f37ce5cffd497987fd0cb6bbbba9be2795c",
+      "code": "send_file(CustomApp.published.where(:agent => accessible_agents).find(params[:custom_app_id]).resolve_asset(params[:path]), :disposition => :inline)",
+      "note": "Safe: resolve_asset validates against directory traversal"
+    }
+  ],
+  "updated": "2026-02-21",
+  "brakeman_version": "8.0.2"
+}

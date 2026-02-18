@@ -1,0 +1,5 @@
+atlas_openrouter:
+  agent: one
+  provider: one
+  model: openai/gpt-4o-mini
+  designation: default
