@@ -2,7 +2,7 @@ require "open3"
 
 class Agent::Workspace
   CONTAINER_PREFIX = "agentgridos-workspace"
-  IMAGE = "agentgridos-workspace:latest"
+  IMAGE = "ghcr.io/quantum-fire-labs/agent-grid-os/workspace:latest"
   EXEC_TIMEOUT = 30
 
   attr_reader :agent

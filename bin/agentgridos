@@ -136,6 +136,10 @@ EOF
   # Launch
   header "Starting AgentGridOS"
 
+  # Pull workspace image
+  header "Pulling workspace image"
+  docker pull ghcr.io/quantum-fire-labs/agent-grid-os/workspace:latest
+
   compose pull
   compose up -d
 
@@ -179,6 +183,10 @@ cmd_update() {
       dim "Added DOCKER_GID to .env"
     fi
   fi
+
+  # Pull workspace image
+  header "Pulling workspace image"
+  docker pull ghcr.io/quantum-fire-labs/agent-grid-os/workspace:latest
 
   compose pull
   compose up -d

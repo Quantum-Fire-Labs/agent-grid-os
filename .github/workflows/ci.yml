@@ -145,7 +145,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push app image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -153,5 +153,16 @@ jobs:
           tags: |
             ghcr.io/quantum-fire-labs/agent-grid-os:latest
             ghcr.io/quantum-fire-labs/agent-grid-os:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,mode=max,scope=app
+
+      - name: Build and push workspace image
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/workspace
+          push: true
+          tags: |
+            ghcr.io/quantum-fire-labs/agent-grid-os/workspace:latest
+            ghcr.io/quantum-fire-labs/agent-grid-os/workspace:${{ github.sha }}
+          cache-from: type=gha,scope=workspace
+          cache-to: type=gha,mode=max,scope=workspace

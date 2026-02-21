@@ -11,10 +11,8 @@ if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare
   ./bin/rails grid:setup
 
-  # Build the workspace image if Docker is available
+  # Restart workspace containers if Docker and the workspace image are available
   if docker info > /dev/null 2>&1; then
-    echo "Building workspace image..."
-    docker build -q -t agentgridos-workspace:latest docker/workspace/
     ./bin/rails grid:restart_workspaces
   fi
 fi
