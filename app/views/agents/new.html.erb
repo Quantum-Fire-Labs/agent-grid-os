@@ -63,6 +63,11 @@
         </div>
       </fieldset>
 
+      <div class="form-group">
+        <%= form.label :instructions, "Instructions (optional)" %>
+        <%= form.textarea :instructions, rows: 6, placeholder: "Custom instructions included in every prompt to this agent" %>
+      </div>
+
       <div class="form-actions">
         <%= form.submit "Create agent", class: "btn btn-primary" %>
         <%= link_to "Cancel", agents_path, class: "btn btn-ghost" %>

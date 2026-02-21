@@ -9,6 +9,7 @@ class Agent::PromptBuilder
     parts = []
     parts << identity
     parts << personality if agent.personality.present?
+    parts << instructions if agent.instructions.present?
     parts << skills_instructions if agent.respond_to?(:skills) && agent.account.skills.any?
     parts << plugin_instructions if agent.plugins.any?
     parts << apps_context if agent.workspace_enabled? || agent.custom_apps.any?
@@ -28,6 +29,10 @@ class Agent::PromptBuilder
 
     def personality
       "## Personality\n\n#{agent.personality}"
+    end
+
+    def instructions
+      "## Instructions\n\n#{agent.instructions}"
     end
 
     def skills_instructions
