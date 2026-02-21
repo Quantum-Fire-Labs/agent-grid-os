@@ -37,6 +37,12 @@ if ! docker compose version &>/dev/null; then
   error "Docker Compose plugin not found. Please install it: https://docs.docker.com/compose/install/"
 fi
 
+# Detect Docker socket GID (used during setup for container access)
+if [[ -S /var/run/docker.sock ]]; then
+  DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
+  dim "Docker socket GID: ${DOCKER_GID}"
+fi
+
 # --- Clone or update repo ---
 
 if [[ -d "${INSTALL_DIR}" ]]; then

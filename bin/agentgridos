@@ -122,6 +122,14 @@ ADMIN_FIRST_NAME=${admin_first_name}
 ADMIN_LAST_NAME=${admin_last_name}
 EOF
 
+  # Detect Docker socket GID for container access
+  if [[ -S /var/run/docker.sock ]]; then
+    echo "DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)" >> "${GRID_DIR}/.env"
+  fi
+
+  # Set host storage path for Docker volume mounts
+  echo "HOST_STORAGE_PATH=${GRID_DIR}/storage" >> "${GRID_DIR}/.env"
+
   chmod 600 "${GRID_DIR}/.env"
   success "Configuration saved to ${GRID_DIR}/.env"
 
@@ -159,6 +167,19 @@ cmd_update() {
   require_root "update"
   header "Updating AgentGridOS"
   git -C "${GRID_DIR}" pull --ff-only
+
+  # Backfill HOST_STORAGE_PATH and DOCKER_GID if missing
+  if [[ -f "${GRID_DIR}/.env" ]]; then
+    if ! grep -q '^HOST_STORAGE_PATH=' "${GRID_DIR}/.env"; then
+      echo "HOST_STORAGE_PATH=${GRID_DIR}/storage" >> "${GRID_DIR}/.env"
+      dim "Added HOST_STORAGE_PATH to .env"
+    fi
+    if ! grep -q '^DOCKER_GID=' "${GRID_DIR}/.env" && [[ -S /var/run/docker.sock ]]; then
+      echo "DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)" >> "${GRID_DIR}/.env"
+      dim "Added DOCKER_GID to .env"
+    fi
+  fi
+
   compose pull
   compose up -d
   success "AgentGridOS is updated and running."

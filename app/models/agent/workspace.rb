@@ -126,72 +126,83 @@ class Agent::Workspace
   class DockerError < StandardError; end
 
   private
+    def create
+      FileUtils.mkdir_p(path)
+      FileUtils.mkdir_p(home_path)
+      run_docker(*build_run_command)
+      # Fix ownership inside the container
+      run_docker("exec", "-u", "root", container_name, "chown", "-R", "agent:agent", "/home/agent")
+      run_docker("exec", "-u", "root", container_name, "chown", "agent:agent", "/workspace")
+      Rails.logger.info("[Agent::Workspace] Created container for agent=#{agent.name}")
+    end
 
-  def create
-    FileUtils.mkdir_p(path)
-    FileUtils.mkdir_p(home_path)
-    run_docker(*build_run_command)
-    # Fix ownership inside the container
-    run_docker("exec", "-u", "root", container_name, "chown", "-R", "agent:agent", "/home/agent")
-    run_docker("exec", "-u", "root", container_name, "chown", "agent:agent", "/workspace")
-    Rails.logger.info("[Agent::Workspace] Created container for agent=#{agent.name}")
-  end
+    def desired_network
+      agent.network_mode_full? ? "bridge" : "none"
+    end
 
-  def desired_network
-    agent.network_mode_full? ? "bridge" : "none"
-  end
+    def current_network
+      stdout, _, status = Open3.capture3("docker", "inspect", "-f", "{{range .NetworkSettings.Networks}}{{.NetworkID}}{{end}}", container_name)
+      return nil unless status.success?
 
-  def current_network
-    stdout, _, status = Open3.capture3("docker", "inspect", "-f", "{{range .NetworkSettings.Networks}}{{.NetworkID}}{{end}}", container_name)
-    return nil unless status.success?
+      # Inspect network mode name instead
+      stdout, _, status = Open3.capture3("docker", "inspect", "-f", "{{.HostConfig.NetworkMode}}", container_name)
+      status.success? ? stdout.strip : nil
+    end
 
-    # Inspect network mode name instead
-    stdout, _, status = Open3.capture3("docker", "inspect", "-f", "{{.HostConfig.NetworkMode}}", container_name)
-    status.success? ? stdout.strip : nil
-  end
+    def network_changed?
+      current = current_network
+      return false if current.nil?
 
-  def network_changed?
-    current = current_network
-    return false if current.nil?
+      current != desired_network
+    end
 
-    current != desired_network
-  end
+    def build_run_command
+      cmd = [
+        "run", "-d",
+        "--name", container_name,
+        "--network", desired_network,
+        "--restart", "unless-stopped",
+        "-v", "#{host_path_for(path)}:/workspace",
+        "-v", "#{host_path_for(home_path)}:/home/agent",
+        "-e", "PATH=/home/agent/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "-w", "/workspace"
+      ]
 
-  def build_run_command
-    cmd = [
-      "run", "-d",
-      "--name", container_name,
-      "--network", desired_network,
-      "--restart", "unless-stopped",
-      "-v", "#{path}:/workspace",
-      "-v", "#{home_path}:/home/agent",
-      "-e", "PATH=/home/agent/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-      "-w", "/workspace"
-    ]
+      agent.plugins.each do |plugin|
+        plugin.mounts.each do |mount|
+          source = resolve_mount_source(mount["source"], plugin)
+          cmd += [ "-v", "#{host_path_for(source)}:#{mount["target"]}:ro" ]
+        end
+      end
 
-    agent.plugins.each do |plugin|
-      plugin.mounts.each do |mount|
-        source = resolve_mount_source(mount["source"], plugin)
-        cmd += [ "-v", "#{source}:#{mount["target"]}:ro" ]
+      cmd += [ IMAGE, "sleep", "infinity" ]
+      cmd
+    end
+
+    # Translate in-container storage paths to host-side paths for Docker volume mounts.
+    # When the Rails app runs inside Docker, paths like /rails/storage/agents/1/workspace
+    # don't exist on the host. HOST_STORAGE_PATH maps to the host directory that's
+    # bind-mounted as /rails/storage inside the container.
+    def host_path_for(container_path)
+      host_base = ENV["HOST_STORAGE_PATH"].presence
+      return container_path.to_s unless host_base
+
+      container_base = Rails.root.join("storage").to_s
+      container_path.to_s.sub(container_base, host_base)
+    end
+
+    def resolve_mount_source(source, plugin)
+      if Pathname.new(source).absolute?
+        source
+      else
+        plugin.path.join(source).to_s
       end
     end
 
-    cmd += [ IMAGE, "sleep", "infinity" ]
-    cmd
-  end
+    def run_docker(*args)
+      stdout, stderr, status = Open3.capture3("docker", *args)
+      return stdout if status.success?
 
-  def resolve_mount_source(source, plugin)
-    if Pathname.new(source).absolute?
-      source
-    else
-      plugin.path.join(source).to_s
+      raise DockerError, "docker #{args.first} exited #{status.exitstatus}: #{stderr.strip}"
     end
-  end
-
-  def run_docker(*args)
-    stdout, stderr, status = Open3.capture3("docker", *args)
-    return stdout if status.success?
-
-    raise DockerError, "docker #{args.first} exited #{status.exitstatus}: #{stderr.strip}"
-  end
 end

@@ -8,9 +8,12 @@ services:
       RAILS_ENV: production
       ALLOWED_HOSTS: "${DOMAIN}"
       SOLID_QUEUE_IN_PUMA: "${SOLID_QUEUE_IN_PUMA:-true}"
+    group_add:
+      - "${DOCKER_GID:-0}"
     volumes:
-      - storage:/rails/storage
+      - ./storage:/rails/storage
       - credentials:/rails/config/credentials
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - web
 
