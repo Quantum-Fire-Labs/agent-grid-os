@@ -1,81 +1,159 @@
-<div class="dashboard">
-  <div class="dashboard-header">
-    <div class="breadcrumb">
-      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <span><%= @agent.name %></span>
+<div class="agent-profile" data-status="<%= @agent.status %>">
+  <%# ── Hero ── %>
+  <div class="agent-profile-hero">
+    <div class="agent-profile-hero-inner">
+      <div class="breadcrumb">
+        <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <span><%= @agent.name %></span>
+      </div>
+
+      <div class="agent-profile-identity">
+        <div class="agent-profile-avatar">
+          <span class="agent-profile-avatar-dot agent-profile-avatar-dot-<%= @agent.status %>"></span>
+          <span class="agent-profile-avatar-initial"><%= @agent.name.first.upcase %></span>
+        </div>
+        <div class="agent-profile-name-block">
+          <h1 class="agent-profile-name"><%= @agent.name %></h1>
+          <% if @agent.title.present? %>
+            <span class="agent-profile-role"><%= @agent.title %></span>
+          <% end %>
+          <div class="agent-profile-status-line">
+            <span class="agent-profile-status agent-profile-status-<%= @agent.status %>">
+              <span class="agent-profile-status-dot"></span>
+              <%= @agent.status %>
+            </span>
+            <% if @agent.network_mode != "none" %>
+              <span class="agent-profile-tag"><%= @agent.network_mode.humanize %></span>
+            <% end %>
+            <% if @agent.workspace_enabled? %>
+              <span class="agent-profile-tag">Workspace</span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="agent-profile-actions">
+        <% if @agent.running? %>
+          <%= link_to chat_path(@agent.conversations.find_or_create_direct(Current.user)), class: "btn btn-primary btn-sm", data: { turbo_frame: "_top" } do %>
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 3C3 2.45 3.45 2 4 2H12C12.55 2 13 2.45 13 3V11C13 11.55 12.55 12 12 12H8L5 14.5V12H4C3.45 12 3 11.55 3 11V3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Chat
+          <% end %>
+        <% end %>
+        <% if @agent.asleep? %>
+          <%= button_to "Awaken", agent_awakening_path(@agent), class: "btn btn-primary btn-sm" %>
+        <% elsif @agent.running? %>
+          <%= button_to "Reboot", agent_awakening_path(@agent), method: :patch, class: "btn btn-ghost btn-sm" %>
+          <%= button_to "Sleep", agent_awakening_path(@agent), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <% end %>
+        <% if Current.user.admin? %>
+          <%= link_to "Edit", edit_agent_path(@agent), class: "btn btn-ghost btn-sm" %>
+        <% end %>
+      </div>
     </div>
   </div>
 
-  <%= turbo_frame_tag @agent do %>
-    <div class="agent-detail">
-      <div class="agent-detail-header">
-        <div>
-          <h1><%= @agent.name %></h1>
-          <% if @agent.title.present? %>
-            <p class="agent-slug"><%= @agent.title %></p>
-          <% end %>
+  <% if Current.user.admin? %>
+    <%# ── Quick Nav ── %>
+    <nav class="agent-profile-quicknav">
+      <%= link_to chats_path, class: "agent-profile-qn-item", data: { turbo_frame: "_top" } do %>
+        <div class="agent-profile-qn-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3.75 4.5C3.75 3.67 4.42 3 5.25 3H12.75C13.58 3 14.25 3.67 14.25 4.5V11.25C14.25 12.08 13.58 12.75 12.75 12.75H9.75L6.75 15.38V12.75H5.25C4.42 12.75 3.75 12.08 3.75 11.25V4.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7.5" cy="8.25" r="0.75" fill="currentColor"/><circle cx="9.75" cy="8.25" r="0.75" fill="currentColor"/><circle cx="12" cy="8.25" r="0.75" fill="currentColor"/></svg>
         </div>
-        <div class="agent-detail-actions">
-          <span class="agent-status status-<%= @agent.status %>"><%= @agent.status %></span>
-          <% if @agent.running? %>
-            <%= link_to "Chat", chat_path(@agent.conversations.find_or_create_direct(Current.user)), class: "btn btn-primary btn-sm", data: { turbo_frame: "_top" } %>
-          <% end %>
-          <% if @agent.asleep? %>
-            <%= button_to "Awaken", agent_awakening_path(@agent), class: "btn btn-primary btn-sm" %>
-          <% elsif @agent.running? %>
-            <%= button_to "Reboot", agent_awakening_path(@agent), method: :patch, class: "btn btn-ghost btn-sm" %>
-            <%= button_to "Sleep", agent_awakening_path(@agent), method: :delete, class: "btn btn-ghost btn-sm" %>
-          <% end %>
-        </div>
-      </div>
-
-      <% if @agent.description.present? %>
-        <p class="agent-detail-description"><%= @agent.description %></p>
+        <span>Conversations</span>
       <% end %>
 
-      <div class="agent-detail-section">
-        <h3 class="section-label">Personality</h3>
+      <%= link_to agent_users_path(@agent), class: "agent-profile-qn-item", data: { turbo_frame: "_top" } do %>
+        <div class="agent-profile-qn-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M12.75 15.75V14.25C12.75 12.59 11.41 11.25 9.75 11.25H5.25C3.59 11.25 2.25 12.59 2.25 14.25V15.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="7.5" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M15.75 15.75V14.25C15.75 13.01 14.99 11.93 13.91 11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <span>Users</span>
+      <% end %>
+
+      <%= link_to agent_plugins_path(@agent), class: "agent-profile-qn-item", data: { turbo_frame: "_top" } do %>
+        <div class="agent-profile-qn-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="5.25" height="5.25" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9.75" y="3" width="5.25" height="5.25" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="9.75" width="5.25" height="5.25" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M12.375 10.5V14.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10.5 12.375H14.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <span>Plugins</span>
+      <% end %>
+
+      <%= link_to agent_models_path(@agent), class: "agent-profile-qn-item", data: { turbo_frame: "_top" } do %>
+        <div class="agent-profile-qn-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2.25L15.75 6V12L9 15.75L2.25 12V6L9 2.25Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 15.75V9" stroke="currentColor" stroke-width="1.5"/><path d="M15.75 6L9 9L2.25 6" stroke="currentColor" stroke-width="1.5"/></svg>
+        </div>
+        <span>Models</span>
+      <% end %>
+
+      <%= link_to agent_memories_path(@agent), class: "agent-profile-qn-item", data: { turbo_frame: "_top" } do %>
+        <div class="agent-profile-qn-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6.75" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="9" r="2.25" stroke="currentColor" stroke-width="1.5"/><path d="M9 2.25V4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 13.5V15.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M2.25 9H4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13.5 9H15.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <span>Memories</span>
+      <% end %>
+
+      <% if @agent.workspace_enabled? %>
+        <%= link_to agent_terminal_path(@agent), class: "agent-profile-qn-item", data: { turbo_frame: "_top" } do %>
+          <div class="agent-profile-qn-icon">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2.25" y="3" width="13.5" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5.25 7.5L7.5 9.75L5.25 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.75 12H12.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <span>Terminal</span>
+        <% end %>
+      <% end %>
+
+      <%= link_to agent_settings_path(@agent), class: "agent-profile-qn-item", data: { turbo_frame: "_top" } do %>
+        <div class="agent-profile-qn-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7.5 3H10.5L11.25 5.25L13.5 6L15.75 4.5L15.75 7.5L13.5 8.25L13.5 9.75L15.75 10.5V13.5L13.5 12L11.25 12.75L10.5 15H7.5L6.75 12.75L4.5 12L2.25 13.5V10.5L4.5 9.75V8.25L2.25 7.5V4.5L4.5 6L6.75 5.25L7.5 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="9" cy="9" r="2.25" stroke="currentColor" stroke-width="1.5"/></svg>
+        </div>
+        <span>Settings</span>
+      <% end %>
+    </nav>
+  <% end %>
+
+  <%# ── Content Cards ── %>
+  <div class="agent-profile-body">
+    <% if @agent.description.present? %>
+      <div class="agent-profile-card">
+        <div class="agent-profile-card-label">About</div>
+        <p class="agent-profile-card-text"><%= @agent.description %></p>
+      </div>
+    <% end %>
+
+    <div class="agent-profile-card-row">
+      <div class="agent-profile-card">
+        <div class="agent-profile-card-label">Personality</div>
         <% if @agent.personality.present? %>
-          <p class="section-text"><%= @agent.personality %></p>
+          <p class="agent-profile-card-text"><%= @agent.personality %></p>
         <% else %>
-          <p class="section-text text-muted">No personality</p>
+          <p class="agent-profile-card-text agent-profile-card-empty">No personality configured</p>
         <% end %>
       </div>
 
-      <div class="agent-detail-section">
-        <h3 class="section-label">Instructions</h3>
+      <div class="agent-profile-card">
+        <div class="agent-profile-card-label">Instructions</div>
         <% if @agent.instructions.present? %>
-          <p class="section-text"><%= simple_format(@agent.instructions) %></p>
+          <div class="agent-profile-card-text agent-profile-instructions"><%= simple_format(@agent.instructions) %></div>
         <% else %>
-          <p class="section-text text-muted">No instructions</p>
-        <% end %>
-      </div>
-
-      <div class="agent-detail-meta">
-        <div class="meta-item">
-          <span class="meta-label">Network mode</span>
-          <span class="meta-value"><%= @agent.network_mode || "none" %></span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Created</span>
-          <span class="meta-value"><%= @agent.created_at.strftime("%b %-d, %Y") %></span>
-        </div>
-      </div>
-
-      <div class="agent-detail-actions-secondary">
-        <%= link_to "Conversations", chats_path, class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
-        <% if Current.user.admin? %>
-          <%= link_to "Users", agent_users_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
-          <%= link_to "Plugins", agent_plugins_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
-          <%= link_to "Models", agent_models_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
-          <%= link_to "Memories", agent_memories_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
-          <% if @agent.workspace_enabled? %>
-            <%= link_to "Terminal", agent_terminal_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
-          <% end %>
-          <%= link_to "Settings", agent_settings_path(@agent), class: "btn btn-ghost btn-sm", data: { turbo_frame: "_top" } %>
-          <%= link_to "Edit", edit_agent_path(@agent), class: "btn btn-ghost btn-sm" %>
-          <%= button_to "Delete", agent_path(@agent), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Delete #{@agent.name}? This cannot be undone." } %>
+          <p class="agent-profile-card-text agent-profile-card-empty">No instructions configured</p>
         <% end %>
       </div>
     </div>
-  <% end %>
+
+    <% if Current.user.admin? %>
+      <div class="agent-profile-footer">
+        <div class="agent-profile-meta-inline">
+          <span class="agent-profile-meta-chip">
+            <span class="agent-profile-meta-key">Network</span>
+            <span class="agent-profile-meta-val"><%= @agent.network_mode.humanize %></span>
+          </span>
+          <span class="agent-profile-meta-chip">
+            <span class="agent-profile-meta-key">Workspace</span>
+            <span class="agent-profile-meta-val"><%= @agent.workspace_enabled? ? "Enabled" : "Disabled" %></span>
+          </span>
+          <span class="agent-profile-meta-chip">
+            <span class="agent-profile-meta-key">Created</span>
+            <span class="agent-profile-meta-val"><%= @agent.created_at.strftime("%b %-d, %Y") %></span>
+          </span>
+        </div>
+        <%= button_to "Delete Agent", agent_path(@agent), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Delete #{@agent.name}? This cannot be undone." } %>
+      </div>
+    <% end %>
+  </div>
 </div>
