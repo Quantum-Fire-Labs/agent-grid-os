@@ -98,7 +98,7 @@ class Agent::Workspace
 
     msg = conversation.messages.create!(
       role: "system",
-      content: "[#{label} #{status}]\n\n#{output}"
+      content: "[#{label} #{status}]\n\n#{output}\n\nReview the output and let the user know what happened."
     )
 
     Turbo::StreamsChannel.broadcast_append_to(

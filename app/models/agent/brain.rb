@@ -39,6 +39,8 @@ class Agent::Brain
 
         on_tool_complete&.call
       else
+        next if response.content.blank?
+
         message = conversation.messages.create!(role: "assistant", content: response.content)
         Agent::Compaction.new(agent, conversation).maybe_compact
         return message
