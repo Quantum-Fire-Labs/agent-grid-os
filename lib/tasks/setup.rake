@@ -1,4 +1,16 @@
 namespace :grid do
+  desc "Restart workspace containers for all running agents"
+  task restart_workspaces: :environment do
+    agents = Agent.running.where(workspace_enabled: true)
+    agents.find_each do |agent|
+      workspace = Agent::Workspace.new(agent)
+      workspace.recreate
+      puts "Restarted workspace for agent #{agent.name} (#{agent.id})"
+    rescue => e
+      puts "Failed to restart workspace for agent #{agent.name}: #{e.message}"
+    end
+  end
+
   desc "Create initial admin account (interactive or via env vars)"
   task setup: :environment do
     if User.any?
