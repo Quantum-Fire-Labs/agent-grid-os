@@ -53,41 +53,55 @@ class Conversation < ApplicationRecord
       stream_id = SecureRandom.hex(4)
     end
 
+    typing_indicator_html = <<~HTML
+      <div class="chat-typing" id="typing-indicator">
+        <div class="chat-msg-gutter">
+          <div class="chat-avatar chat-avatar-agent">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
+              <circle cx="7" cy="7" r="1.5" fill="currentColor"/>
+            </svg>
+          </div>
+        </div>
+        <div class="chat-msg-body">
+          <div class="chat-msg-meta">
+            <span class="chat-msg-sender">#{ERB::Util.html_escape(agent.name)}</span>
+          </div>
+          <div class="chat-typing-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    HTML
+
+    pending_tool_messages = []
+
     on_message = ->(msg) do
       reset_streaming.call
-      Turbo::StreamsChannel.broadcast_append_to(
-        self,
-        target: "chat-messages",
-        partial: "agents/conversations/messages/message",
-        locals: { message: msg, agent: agent }
-      )
+      if msg.role == "tool"
+        pending_tool_messages << msg
+      else
+        Turbo::StreamsChannel.broadcast_append_to(
+          self,
+          target: "chat-messages",
+          partial: "agents/conversations/messages/message",
+          locals: { message: msg, agent: agent }
+        )
+      end
     end
 
     on_tool_complete = -> do
-      Turbo::StreamsChannel.broadcast_append_to(
-        self,
-        target: "chat-messages",
-        html: <<~HTML
-          <div class="chat-typing" id="typing-indicator">
-            <div class="chat-msg-gutter">
-              <div class="chat-avatar chat-avatar-agent">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
-                  <circle cx="7" cy="7" r="1.5" fill="currentColor"/>
-                </svg>
-              </div>
-            </div>
-            <div class="chat-msg-body">
-              <div class="chat-msg-meta">
-                <span class="chat-msg-sender">#{ERB::Util.html_escape(agent.name)}</span>
-              </div>
-              <div class="chat-typing-dots">
-                <span></span><span></span><span></span>
-              </div>
-            </div>
-          </div>
-        HTML
-      )
+      stream_content = +""
+      pending_tool_messages.each do |msg|
+        html = ApplicationController.render(
+          partial: "agents/conversations/messages/message",
+          locals: { message: msg, agent: agent }
+        )
+        stream_content << "<turbo-stream action=\"append\" target=\"chat-messages\"><template>#{html}</template></turbo-stream>"
+      end
+      stream_content << "<turbo-stream action=\"append\" target=\"chat-messages\"><template>#{typing_indicator_html}</template></turbo-stream>"
+      Turbo::StreamsChannel.broadcast_stream_to(self, content: stream_content)
+      pending_tool_messages.clear
     end
 
     tts = start_tts_stream if tts_enabled
