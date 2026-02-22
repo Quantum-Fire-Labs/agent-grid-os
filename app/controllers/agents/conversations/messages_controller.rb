@@ -38,46 +38,43 @@ class Agents::Conversations::MessagesController < ApplicationController
 
     @message.audio.attach(audio) if audio.present?
 
-    Turbo::StreamsChannel.broadcast_remove_to(@conversation, target: "chat-welcome")
-    Turbo::StreamsChannel.broadcast_append_to(
-      @conversation,
-      target: "chat-messages",
+    agent_tagged = @conversation.kind_direct? || content&.match?(/@#{Regexp.escape(@agent.name)}\b/)
+
+    message_html = ApplicationController.render(
       partial: "agents/conversations/messages/message",
       locals: { message: @message, agent: @agent }
     )
 
-    agent_tagged = @conversation.kind_direct? || content&.match?(/@#{Regexp.escape(@agent.name)}\b/)
-
-    if agent_tagged
-      Turbo::StreamsChannel.broadcast_append_to(
-        @conversation,
-        target: "chat-messages",
-        html: <<~HTML
-          <div class="chat-typing" id="typing-indicator">
-            <div class="chat-msg-gutter">
-              <div class="chat-avatar chat-avatar-agent">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
-                  <circle cx="7" cy="7" r="1.5" fill="currentColor"/>
-                </svg>
-              </div>
-            </div>
-            <div class="chat-msg-body">
-              <div class="chat-msg-meta">
-                <span class="chat-msg-sender">#{ERB::Util.html_escape(@agent.name)}</span>
-              </div>
-              <div class="chat-typing-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
+    typing_html = if agent_tagged
+      <<~HTML
+        <div class="chat-typing" id="typing-indicator">
+          <div class="chat-msg-gutter">
+            <div class="chat-avatar chat-avatar-agent">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
+                <circle cx="7" cy="7" r="1.5" fill="currentColor"/>
+              </svg>
             </div>
           </div>
-        HTML
-      )
-
-      @conversation.enqueue_agent_reply(tts_enabled: tts_enabled)
+          <div class="chat-msg-body">
+            <div class="chat-msg-meta">
+              <span class="chat-msg-sender">#{ERB::Util.html_escape(@agent.name)}</span>
+            </div>
+            <div class="chat-typing-dots">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      HTML
     end
+
+    stream_content = +"<turbo-stream action=\"remove\" target=\"chat-welcome\"><template></template></turbo-stream>"
+    stream_content << "<turbo-stream action=\"append\" target=\"chat-messages\"><template>#{message_html}</template></turbo-stream>"
+    stream_content << "<turbo-stream action=\"append\" target=\"chat-messages\"><template>#{typing_html}</template></turbo-stream>" if typing_html
+
+    Turbo::StreamsChannel.broadcast_stream_to(@conversation, content: stream_content)
+
+    @conversation.enqueue_agent_reply(tts_enabled: tts_enabled) if agent_tagged
 
     head :ok
   end
