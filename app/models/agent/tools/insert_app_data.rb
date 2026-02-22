@@ -28,7 +28,7 @@ class Agent::Tools::InsertAppData < Agent::Tools::Base
 
   private
     def find_app!
-      agent.custom_apps.find_by!(name: arguments["app"])
+      agent.accessible_apps.find_by!(name: arguments["app"])
     rescue ActiveRecord::RecordNotFound
       "Error: no app named '#{arguments["app"]}' found for this agent."
     end

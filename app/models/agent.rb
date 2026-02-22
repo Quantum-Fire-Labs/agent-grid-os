@@ -10,6 +10,8 @@ class Agent < ApplicationRecord
   has_many :custom_apps, dependent: :destroy
   has_many :agent_plugins, dependent: :destroy
   has_many :plugins, through: :agent_plugins
+  has_many :custom_app_agent_accesses, dependent: :destroy
+  has_many :granted_apps, through: :custom_app_agent_accesses, source: :custom_app
   has_many :plugin_configs, as: :configurable, dependent: :destroy
   has_many :key_chains, as: :owner, dependent: :destroy
   has_many :configs, as: :configurable, dependent: :destroy
@@ -47,6 +49,10 @@ class Agent < ApplicationRecord
     elsif designation == "default"
       resolve_model(designation: "fallback")
     end
+  end
+
+  def accessible_apps
+    CustomApp.where(id: custom_app_ids + granted_app_ids)
   end
 
   private

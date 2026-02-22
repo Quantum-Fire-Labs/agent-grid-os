@@ -4,6 +4,7 @@ class CustomApp < ApplicationRecord
 
   belongs_to :agent
   belongs_to :account
+  has_many :custom_app_agent_accesses, dependent: :destroy
 
   before_validation :set_account_from_agent, on: :create
   has_one_attached :icon_image

@@ -9,6 +9,14 @@ class Agent::ToolRegistry
     "recall_memory"      => Agent::Tools::RecallMemory
   }.freeze
 
+  DATA_TOOLS = {
+    "list_app_tables"    => Agent::Tools::ListAppTables,
+    "query_app_data"     => Agent::Tools::QueryAppData,
+    "insert_app_data"    => Agent::Tools::InsertAppData,
+    "update_app_data"    => Agent::Tools::UpdateAppData,
+    "delete_app_data"    => Agent::Tools::DeleteAppData
+  }.freeze
+
   WORKSPACE_TOOLS = {
     "exec"               => Agent::Tools::Exec,
     "write_file"         => Agent::Tools::WriteFile,
@@ -17,16 +25,12 @@ class Agent::ToolRegistry
     "unregister_tool"    => Agent::Tools::UnregisterTool,
     "list_custom_tools"  => Agent::Tools::ListCustomTools,
     "register_app"       => Agent::Tools::RegisterApp,
-    "unregister_app"     => Agent::Tools::UnregisterApp,
-    "list_app_tables"    => Agent::Tools::ListAppTables,
-    "query_app_data"     => Agent::Tools::QueryAppData,
-    "insert_app_data"    => Agent::Tools::InsertAppData,
-    "update_app_data"    => Agent::Tools::UpdateAppData,
-    "delete_app_data"    => Agent::Tools::DeleteAppData
+    "unregister_app"     => Agent::Tools::UnregisterApp
   }.freeze
 
   def self.definitions(agent:)
     tools = TOOLS.values
+    tools += DATA_TOOLS.values if agent.accessible_apps.any?
     if agent.workspace_enabled?
       tools += WORKSPACE_TOOLS.values
       tools += agent.custom_tools.map { |ct| ct }
@@ -57,7 +61,7 @@ class Agent::ToolRegistry
       return execute_plugin_tool(plugin, name, arguments, agent: agent, context: context)
     end
 
-    tool_class = TOOLS[name] || (agent.workspace_enabled? && WORKSPACE_TOOLS[name])
+    tool_class = TOOLS[name] || DATA_TOOLS[name] || (agent.workspace_enabled? && WORKSPACE_TOOLS[name])
     return "Unknown tool: #{name}" unless tool_class
 
     tool_class.new(agent: agent, arguments: arguments, context: context).call

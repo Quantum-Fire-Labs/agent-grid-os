@@ -6,6 +6,14 @@ one:
   status: asleep
   network_mode: none
 
+three:
+  account: one
+  name: Nova
+  title: Data Analyst
+  description: Analyzes data
+  status: asleep
+  network_mode: none
+
 two:
   account: two
   name: Beacon

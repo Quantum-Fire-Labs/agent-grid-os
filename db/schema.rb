@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_22_051958) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_22_225042) do
   create_table "accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -112,6 +112,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_051958) do
     t.string "kind", default: "direct", null: false
     t.datetime "updated_at", null: false
     t.index ["agent_id"], name: "index_conversations_on_agent_id"
+  end
+
+  create_table "custom_app_agent_accesses", force: :cascade do |t|
+    t.integer "agent_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "custom_app_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agent_id", "custom_app_id"], name: "index_custom_app_agent_accesses_on_agent_id_and_custom_app_id", unique: true
+    t.index ["agent_id"], name: "index_custom_app_agent_accesses_on_agent_id"
+    t.index ["custom_app_id"], name: "index_custom_app_agent_accesses_on_custom_app_id"
   end
 
   create_table "custom_apps", force: :cascade do |t|
@@ -286,6 +296,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_051958) do
   add_foreign_key "agent_users", "users"
   add_foreign_key "agents", "accounts"
   add_foreign_key "conversations", "agents"
+  add_foreign_key "custom_app_agent_accesses", "agents"
+  add_foreign_key "custom_app_agent_accesses", "custom_apps"
   add_foreign_key "custom_apps", "accounts"
   add_foreign_key "custom_apps", "agents"
   add_foreign_key "custom_tools", "agents"

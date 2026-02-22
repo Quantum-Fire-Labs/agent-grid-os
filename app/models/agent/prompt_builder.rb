@@ -13,7 +13,7 @@ class Agent::PromptBuilder
     parts << network_access if agent.workspace_enabled?
     parts << skills_instructions if agent.respond_to?(:skills) && agent.account.skills.any?
     parts << plugin_instructions if agent.plugins.any?
-    parts << apps_context if agent.workspace_enabled? || agent.custom_apps.any?
+    parts << apps_context if agent.workspace_enabled? || agent.custom_apps.any? || agent.granted_apps.any?
     parts << recalled_memories(conversation, current_message)
     parts << group_chat_context(conversation) if conversation&.kind_group?
     parts << current_time(current_message_record)
@@ -89,10 +89,18 @@ class Agent::PromptBuilder
         parts << apps_instructions
       end
 
+      parts << data_tools_instructions if agent.custom_apps.any? || agent.granted_apps.any?
+
       apps = agent.custom_apps.order(:name)
       if apps.any?
         lines = apps.map { |app| "- #{app.name} (#{app.status}): #{app.description}" }
         parts << "### Your registered apps\n#{lines.join("\n")}"
+      end
+
+      granted = agent.granted_apps.where(status: :published).order(:name)
+      if granted.any?
+        lines = granted.map { |app| "- #{app.name}: #{app.description}" }
+        parts << "### Apps you have data access to\n#{lines.join("\n")}"
       end
 
       parts.compact.any? ? "## Apps\n\n#{parts.compact.join("\n\n")}" : nil
@@ -133,8 +141,18 @@ class Agent::PromptBuilder
         - `await AgentGridOS.kv.list(namespace)` — returns `[{key, value}, ...]`
         - `await AgentGridOS.kv.delete(namespace, key)`
 
+        ### Tips
+        - Use inline `<script>` and `<style>` tags for simple apps, or reference separate files via relative paths
+        - The CSRF token is handled automatically by the SDK
+        - All SDK methods are async and return promises
+        - Column types: TEXT, INTEGER, REAL, BLOB, NUMERIC
+      INSTRUCTIONS
+    end
+
+    def data_tools_instructions
+      <<~INSTRUCTIONS.strip
         ### App data tools
-        You can read and write app data directly during conversation (without the browser SDK):
+        You can read and write app data directly during conversation:
         - `list_app_tables` — list all tables in an app's database
         - `query_app_data` — query rows from a table (supports `where`, `limit`, `offset`)
         - `insert_app_data` — insert a row into a table
@@ -142,12 +160,6 @@ class Agent::PromptBuilder
         - `delete_app_data` — delete a row by ID
 
         All data tools take an `app` parameter (the app name) to identify which app's database to use.
-
-        ### Tips
-        - Use inline `<script>` and `<style>` tags for simple apps, or reference separate files via relative paths
-        - The CSRF token is handled automatically by the SDK
-        - All SDK methods are async and return promises
-        - Column types: TEXT, INTEGER, REAL, BLOB, NUMERIC
       INSTRUCTIONS
     end
 

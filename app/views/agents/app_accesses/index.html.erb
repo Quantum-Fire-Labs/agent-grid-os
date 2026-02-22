@@ -1,0 +1,59 @@
+<div class="agent-profile" data-status="<%= @agent.status %>">
+  <%= render "agents/header", active_tab: "apps" %>
+
+  <div class="agent-profile-body">
+    <% if @granted_apps.any? %>
+      <div class="agent-detail-section">
+        <h3 class="section-label">Granted App Access</h3>
+        <div class="skills-list">
+          <% @granted_apps.each do |app| %>
+            <div class="skill-card">
+              <div class="skill-card-header">
+                <h3 class="skill-name"><%= app.name %></h3>
+                <span class="badge"><%= app.status %></span>
+              </div>
+              <% if app.description.present? %>
+                <p class="skill-description"><%= truncate(app.description, length: 120) %></p>
+              <% end %>
+              <p class="text-muted">Owned by <%= app.agent.name %></p>
+              <div class="skill-card-actions">
+                <% access = @agent.custom_app_agent_accesses.find_by(custom_app: app) %>
+                <%= button_to "Revoke", agent_app_access_path(@agent, access), method: :delete, class: "btn btn-ghost btn-sm" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @available_apps.any? %>
+      <div class="agent-detail-section">
+        <h3 class="section-label">Available Apps</h3>
+        <div class="skills-list">
+          <% @available_apps.each do |app| %>
+            <div class="skill-card">
+              <div class="skill-card-header">
+                <h3 class="skill-name"><%= app.name %></h3>
+                <span class="badge"><%= app.status %></span>
+              </div>
+              <% if app.description.present? %>
+                <p class="skill-description"><%= truncate(app.description, length: 120) %></p>
+              <% end %>
+              <p class="text-muted">Owned by <%= app.agent.name %></p>
+              <div class="skill-card-actions">
+                <%= button_to "Grant Access", agent_app_accesses_path(@agent, custom_app_id: app.id), method: :post, class: "btn btn-primary btn-sm" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @granted_apps.empty? && @available_apps.empty? %>
+      <div class="empty-state">
+        <h2>No apps available</h2>
+        <p>Other agents in this account haven't created any apps yet.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,3 @@
+nova_slideshow:
+  agent: three
+  custom_app: slideshow
