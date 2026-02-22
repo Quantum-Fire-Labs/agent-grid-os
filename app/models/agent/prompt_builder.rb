@@ -10,6 +10,7 @@ class Agent::PromptBuilder
     parts << identity
     parts << personality if agent.personality.present?
     parts << instructions if agent.instructions.present?
+    parts << network_access
     parts << skills_instructions if agent.respond_to?(:skills) && agent.account.skills.any?
     parts << plugin_instructions if agent.plugins.any?
     parts << apps_context if agent.workspace_enabled? || agent.custom_apps.any?
@@ -33,6 +34,19 @@ class Agent::PromptBuilder
 
     def instructions
       "## Instructions\n\n#{agent.instructions}"
+    end
+
+    def network_access
+      case agent.network_mode
+      when "none"
+        "## Network Access\n\nYou have no network access. You cannot make outbound HTTP requests."
+      when "allowed"
+        "## Network Access\n\nYou have network access. You can make outbound HTTP requests to external services."
+      when "allowed_plus_skills"
+        "## Network Access\n\nYou have network access with skill-specific permissions. You can make outbound HTTP requests."
+      when "full"
+        "## Network Access\n\nYou have full network access. You can make HTTP requests to external services."
+      end
     end
 
     def skills_instructions
