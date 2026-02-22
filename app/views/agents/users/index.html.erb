@@ -1,66 +1,64 @@
-<div class="dashboard">
-  <div class="dashboard-header">
-    <div class="breadcrumb">
-      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <%= link_to @agent.name, agent_path(@agent) %> <span class="breadcrumb-sep">/</span> <span>Users</span>
-    </div>
-  </div>
+<div class="agent-profile" data-status="<%= @agent.status %>">
+  <%= render "agents/header", active_tab: "users" %>
 
-  <div class="settings-section">
-    <div class="settings-section-header">
-      <h2 class="settings-section-title">Assigned Users</h2>
-    </div>
-
-    <% if @agent_users.any? %>
-      <div class="user-list">
-        <% @agent_users.each do |agent_user| %>
-          <% user = agent_user.user %>
-          <div class="user-row">
-            <div class="user-row-left">
-              <div class="user-avatar"><%= user.first_name[0] %><%= user.last_name[0] %></div>
-              <div class="user-row-info">
-                <span class="user-row-name">
-                  <%= user.first_name %> <%= user.last_name %>
-                  <span class="user-badge-role user-badge-role-<%= user.role %>"><%= user.role.capitalize %></span>
-                </span>
-                <span class="user-row-email"><%= user.email_address %></span>
-              </div>
-            </div>
-            <div class="user-row-right">
-              <%= button_to "Remove", agent_user_path(@agent, agent_user), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Remove #{user.first_name} from #{@agent.name}?" } %>
-            </div>
-          </div>
-        <% end %>
-      </div>
-    <% else %>
-      <p class="settings-empty">No users assigned. Admins can always access all agents.</p>
-    <% end %>
-  </div>
-
-  <% if @available_users.any? %>
+  <div class="agent-profile-body">
     <div class="settings-section">
       <div class="settings-section-header">
-        <h2 class="settings-section-title">Add Users</h2>
+        <h2 class="settings-section-title">Assigned Users</h2>
       </div>
 
-      <div class="user-list">
-        <% @available_users.each do |user| %>
-          <div class="user-row">
-            <div class="user-row-left">
-              <div class="user-avatar"><%= user.first_name[0] %><%= user.last_name[0] %></div>
-              <div class="user-row-info">
-                <span class="user-row-name">
-                  <%= user.first_name %> <%= user.last_name %>
-                  <span class="user-badge-role user-badge-role-<%= user.role %>"><%= user.role.capitalize %></span>
-                </span>
-                <span class="user-row-email"><%= user.email_address %></span>
+      <% if @agent_users.any? %>
+        <div class="user-list">
+          <% @agent_users.each do |agent_user| %>
+            <% user = agent_user.user %>
+            <div class="user-row">
+              <div class="user-row-left">
+                <div class="user-avatar"><%= user.first_name[0] %><%= user.last_name[0] %></div>
+                <div class="user-row-info">
+                  <span class="user-row-name">
+                    <%= user.first_name %> <%= user.last_name %>
+                    <span class="user-badge-role user-badge-role-<%= user.role %>"><%= user.role.capitalize %></span>
+                  </span>
+                  <span class="user-row-email"><%= user.email_address %></span>
+                </div>
+              </div>
+              <div class="user-row-right">
+                <%= button_to "Remove", agent_user_path(@agent, agent_user), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Remove #{user.first_name} from #{@agent.name}?" } %>
               </div>
             </div>
-            <div class="user-row-right">
-              <%= button_to "Add", agent_users_path(@agent, user_id: user.id), method: :post, class: "btn btn-primary btn-sm" %>
-            </div>
-          </div>
-        <% end %>
-      </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="settings-empty">No users assigned. Admins can always access all agents.</p>
+      <% end %>
     </div>
-  <% end %>
+
+    <% if @available_users.any? %>
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <h2 class="settings-section-title">Add Users</h2>
+        </div>
+
+        <div class="user-list">
+          <% @available_users.each do |user| %>
+            <div class="user-row">
+              <div class="user-row-left">
+                <div class="user-avatar"><%= user.first_name[0] %><%= user.last_name[0] %></div>
+                <div class="user-row-info">
+                  <span class="user-row-name">
+                    <%= user.first_name %> <%= user.last_name %>
+                    <span class="user-badge-role user-badge-role-<%= user.role %>"><%= user.role.capitalize %></span>
+                  </span>
+                  <span class="user-row-email"><%= user.email_address %></span>
+                </div>
+              </div>
+              <div class="user-row-right">
+                <%= button_to "Add", agent_users_path(@agent, user_id: user.id), method: :post, class: "btn btn-primary btn-sm" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
 </div>

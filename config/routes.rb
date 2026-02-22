@@ -14,6 +14,7 @@ Rails.application.routes.draw do
     resource :settings, only: %i[show update], module: :agents
     resources :plugins, only: %i[index create destroy], module: :agents
     resources :memories, only: %i[index edit update destroy], module: :agents
+    resource :workspace, only: %i[show update create], module: :agents
     resource :terminal, only: :show, module: :agents
   end
   resources :skills

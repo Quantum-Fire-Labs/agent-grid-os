@@ -1,72 +1,70 @@
-<div class="dashboard">
-  <div class="dashboard-header">
-    <div class="breadcrumb">
-      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <%= link_to @agent.name, agent_path(@agent) %> <span class="breadcrumb-sep">/</span> <span>Plugins</span>
-    </div>
-  </div>
+<div class="agent-profile" data-status="<%= @agent.status %>">
+  <%= render "agents/header", active_tab: "plugins" %>
 
-  <% if @enabled_plugins.any? %>
-    <div class="agent-detail-section">
-      <h3 class="section-label">Enabled Plugins</h3>
-      <div class="skills-list">
-        <% @enabled_plugins.each do |plugin| %>
-          <div class="skill-card">
-            <div class="skill-card-header">
-              <h3 class="skill-name"><%= link_to plugin.name, plugin_path(plugin) %></h3>
-              <span class="badge"><%= plugin.plugin_type %></span>
+  <div class="agent-profile-body">
+    <% if @enabled_plugins.any? %>
+      <div class="agent-detail-section">
+        <h3 class="section-label">Enabled Plugins</h3>
+        <div class="skills-list">
+          <% @enabled_plugins.each do |plugin| %>
+            <div class="skill-card">
+              <div class="skill-card-header">
+                <h3 class="skill-name"><%= link_to plugin.name, plugin_path(plugin) %></h3>
+                <span class="badge"><%= plugin.plugin_type %></span>
+              </div>
+              <% if plugin.description.present? %>
+                <p class="skill-description"><%= truncate(plugin.description, length: 120) %></p>
+              <% end %>
+              <% if plugin.setup_instructions.present? %>
+                <div class="plugin-setup">
+                  <h4 class="section-label">Setup</h4>
+                  <div class="plugin-setup-instructions"><%= simple_format(plugin.setup_instructions) %></div>
+                  <% if @agent.workspace_enabled? %>
+                    <%= link_to "Authenticate in Terminal", agent_terminal_path(@agent, command: plugin.setup_command), class: "btn btn-primary btn-sm" %>
+                  <% end %>
+                </div>
+              <% end %>
+              <div class="skill-card-actions">
+                <% agent_plugin = @agent.agent_plugins.find_by(plugin: plugin) %>
+                <%= button_to "Disable", agent_plugin_path(@agent, agent_plugin), method: :delete, class: "btn btn-ghost btn-sm" %>
+              </div>
             </div>
-            <% if plugin.description.present? %>
-              <p class="skill-description"><%= truncate(plugin.description, length: 120) %></p>
-            <% end %>
-            <% if plugin.setup_instructions.present? %>
-              <div class="plugin-setup">
-                <h4 class="section-label">Setup</h4>
-                <div class="plugin-setup-instructions"><%= simple_format(plugin.setup_instructions) %></div>
-                <% if @agent.workspace_enabled? %>
-                  <%= link_to "Authenticate in Terminal", agent_terminal_path(@agent, command: plugin.setup_command), class: "btn btn-primary btn-sm" %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @available_plugins.any? %>
+      <div class="agent-detail-section">
+        <h3 class="section-label">Available Plugins</h3>
+        <div class="skills-list">
+          <% @available_plugins.each do |plugin| %>
+            <div class="skill-card">
+              <div class="skill-card-header">
+                <h3 class="skill-name"><%= link_to plugin.name, plugin_path(plugin) %></h3>
+                <span class="badge"><%= plugin.plugin_type %></span>
+              </div>
+              <% if plugin.description.present? %>
+                <p class="skill-description"><%= truncate(plugin.description, length: 120) %></p>
+              <% end %>
+              <div class="skill-card-actions">
+                <% if plugin.compatible_with_network_mode?(@agent.network_mode) %>
+                  <%= button_to "Enable", agent_plugins_path(@agent, plugin_id: plugin.id), method: :post, class: "btn btn-primary btn-sm" %>
+                <% else %>
+                  <span class="text-muted">Requires <%= plugin.requires_full_network? ? "full" : "network" %> access</span>
                 <% end %>
               </div>
-            <% end %>
-            <div class="skill-card-actions">
-              <% agent_plugin = @agent.agent_plugins.find_by(plugin: plugin) %>
-              <%= button_to "Disable", agent_plugin_path(@agent, agent_plugin), method: :delete, class: "btn btn-ghost btn-sm" %>
             </div>
-          </div>
-        <% end %>
+          <% end %>
+        </div>
       </div>
-    </div>
-  <% end %>
+    <% end %>
 
-  <% if @available_plugins.any? %>
-    <div class="agent-detail-section">
-      <h3 class="section-label">Available Plugins</h3>
-      <div class="skills-list">
-        <% @available_plugins.each do |plugin| %>
-          <div class="skill-card">
-            <div class="skill-card-header">
-              <h3 class="skill-name"><%= link_to plugin.name, plugin_path(plugin) %></h3>
-              <span class="badge"><%= plugin.plugin_type %></span>
-            </div>
-            <% if plugin.description.present? %>
-              <p class="skill-description"><%= truncate(plugin.description, length: 120) %></p>
-            <% end %>
-            <div class="skill-card-actions">
-              <% if plugin.compatible_with_network_mode?(@agent.network_mode) %>
-                <%= button_to "Enable", agent_plugins_path(@agent, plugin_id: plugin.id), method: :post, class: "btn btn-primary btn-sm" %>
-              <% else %>
-                <span class="text-muted">Requires <%= plugin.requires_full_network? ? "full" : "network" %> access</span>
-              <% end %>
-            </div>
-          </div>
-        <% end %>
+    <% if @enabled_plugins.empty? && @available_plugins.empty? %>
+      <div class="empty-state">
+        <h2>No plugins available</h2>
+        <p><%= link_to "Install a plugin", new_plugin_path %> to get started.</p>
       </div>
-    </div>
-  <% end %>
-
-  <% if @enabled_plugins.empty? && @available_plugins.empty? %>
-    <div class="empty-state">
-      <h2>No plugins available</h2>
-      <p><%= link_to "Install a plugin", new_plugin_path %> to get started.</p>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 </div>

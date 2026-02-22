@@ -31,10 +31,6 @@ class Agents::SettingsController < ApplicationController
     save_config("tts_speed", settings[:tts_speed]) if settings[:tts_speed].present?
     save_config("elevenlabs_model", settings[:elevenlabs_model]) if settings[:elevenlabs_model].present?
 
-    if settings.key?(:workspace_enabled)
-      @agent.update!(workspace_enabled: settings[:workspace_enabled] == "1")
-    end
-
     redirect_to agent_settings_path(@agent), notice: "Settings saved."
   end
 

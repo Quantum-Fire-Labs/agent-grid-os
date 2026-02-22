@@ -1,0 +1,66 @@
+<div class="agent-profile" data-status="<%= @agent.status %>">
+  <%= render "agents/header", active_tab: "workspace" %>
+
+  <div class="agent-profile-body">
+    <% if flash[:notice] %>
+      <div class="flash flash-notice"><%= flash[:notice] %></div>
+    <% end %>
+
+    <%= form_with url: agent_workspace_path(@agent), method: :patch, data: { controller: "auto-submit", turbo_frame: "_top" } do |form| %>
+      <input type="hidden" name="workspace[enabled]" value="0">
+      <label class="switch-label">
+        <span class="switch">
+          <%= check_box_tag "workspace[enabled]", "1", @agent.workspace_enabled?, id: "workspace_enabled", class: "switch-input", data: { action: "auto-submit#submit" } %>
+          <span class="switch-track"></span>
+        </span>
+        <span class="switch-text">
+          <span class="switch-title">Workspace</span>
+          <span class="switch-hint">Sandboxed Docker container for code execution, file I/O, and package installation.</span>
+        </span>
+      </label>
+    <% end %>
+
+    <% if @agent.workspace_enabled? %>
+      <div class="workspace-explorer" data-controller="workspace-explorer" data-workspace-explorer-agent-id-value="<%= @agent.id %>">
+        <div class="workspace-toolbar">
+          <div class="workspace-toolbar-actions">
+            <button type="button" class="btn btn-ghost btn-sm" data-action="workspace-explorer#showNewInput" data-workspace-explorer-type-param="file">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 2h5l3 3v8c0 .55-.45 1-1 1H4c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1z" stroke="currentColor" stroke-width="1.25"/><path d="M8 6v4M6 8h4" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
+              New File
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="workspace-explorer#showNewInput" data-workspace-explorer-type-param="directory">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4c0-.55.45-1 1-1h3.59l1.7 1.71c.19.18.44.29.71.29h4c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4z" stroke="currentColor" stroke-width="1.25"/><path d="M8 7v3M6.5 8.5h3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
+              New Directory
+            </button>
+          </div>
+          <%= link_to agent_terminal_path(@agent), class: "btn btn-ghost btn-sm" do %>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.25"/><path d="M4 6l2 2-2 2" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10h3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
+            Terminal
+          <% end %>
+        </div>
+
+        <div class="workspace-new-input" data-workspace-explorer-target="newInput" style="display: none;">
+          <form data-action="submit->workspace-explorer#submitNew">
+            <input type="text" placeholder="Name" class="workspace-new-name-input">
+            <button type="submit" class="btn btn-primary btn-sm">Create</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="workspace-explorer#cancelNew">Cancel</button>
+          </form>
+        </div>
+
+        <div class="workspace-tree" data-workspace-explorer-target="tree"></div>
+
+        <div class="workspace-viewer" data-workspace-explorer-target="viewer" style="display: none;">
+          <div class="workspace-viewer-header">
+            <span class="workspace-viewer-filename" data-workspace-explorer-target="viewerFilename"></span>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="workspace-explorer#closeViewer">Close</button>
+          </div>
+          <pre class="workspace-viewer-content" data-workspace-explorer-target="viewerContent"></pre>
+        </div>
+      </div>
+    <% else %>
+      <div class="workspace-empty">
+        <p>Enable the workspace above to browse and manage files.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -115,6 +115,42 @@ class Agent::Workspace
     Rails.root.join("storage", "agents", agent.id.to_s, "workspace")
   end
 
+  def sanitized_path(relative_path)
+    cleaned = Pathname.new(relative_path).cleanpath.to_s
+    raise ArgumentError, "Path escapes workspace" if cleaned.start_with?("/") || cleaned.start_with?("..")
+    cleaned
+  end
+
+  def read_file(relative_path)
+    return nil unless running?
+
+    safe_path = sanitized_path(relative_path)
+    result = exec("cat #{Shellwords.shellescape(safe_path)} 2>/dev/null")
+    result[:exit_code] == 0 ? result[:stdout] : nil
+  end
+
+  def list(relative_path = ".")
+    return [] unless running?
+
+    safe_path = sanitized_path(relative_path)
+    result = exec("ls -la --time-style=long-iso #{Shellwords.shellescape(safe_path)} 2>/dev/null")
+    return [] unless result[:exit_code] == 0
+
+    result[:stdout].lines.drop(1).filter_map do |line|
+      parts = line.strip.split(/\s+/, 8)
+      next if parts.length < 8
+      next if parts[7] == "." || parts[7] == ".."
+
+      type = parts[0].start_with?("d") ? "directory" : "file"
+      {
+        name: parts[7],
+        type: type,
+        size: parts[4].to_i,
+        modified_at: "#{parts[5]} #{parts[6]}"
+      }
+    end
+  end
+
   def home_path
     Rails.root.join("storage", "agents", agent.id.to_s, "home")
   end
@@ -205,4 +241,5 @@ class Agent::Workspace
 
       raise DockerError, "docker #{args.first} exited #{status.exitstatus}: #{stderr.strip}"
     end
+
 end

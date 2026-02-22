@@ -46,11 +46,11 @@ class Agents::SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "0.85", @agent.configs.find_by(key: "tts_speed").value
   end
 
-  test "update saves workspace enabled" do
+  test "update no longer handles workspace enabled" do
     patch agent_settings_path(@agent), params: { agent_settings: { workspace_enabled: "1" } }
 
     assert_redirected_to agent_settings_path(@agent)
-    assert @agent.reload.workspace_enabled?
+    refute @agent.reload.workspace_enabled?, "workspace_enabled should not be toggled via settings"
   end
 
   test "update ignores blank voice" do
