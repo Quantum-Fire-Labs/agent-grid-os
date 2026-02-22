@@ -2159,6 +2159,8 @@ fieldset {
   font-size: 0.9375rem;
   line-height: 1.6;
   color: var(--text-primary);
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .chat-msg-text p {
