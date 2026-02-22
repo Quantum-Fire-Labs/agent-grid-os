@@ -19,14 +19,25 @@ class CustomAppAgentAccessTest < ActiveSupport::TestCase
     assert_includes access.errors[:base], "Agent and app must belong to the same account"
   end
 
-  test "agent accessible_apps includes own and granted apps" do
+  test "owning agent accessible_apps includes own apps" do
+    agent = agents(:one)
+    assert_includes agent.accessible_apps, custom_apps(:slideshow)
+    assert_includes agent.accessible_apps, custom_apps(:draft_app)
+  end
+
+  test "granted agent accessible_apps includes granted apps" do
     agent = agents(:three)
     assert_includes agent.accessible_apps, custom_apps(:slideshow)
   end
 
-  test "agent accessible_apps does not include ungranted apps" do
+  test "accessible_apps does not include ungranted apps" do
     agent = agents(:three)
     assert_not_includes agent.accessible_apps, custom_apps(:draft_app)
+  end
+
+  test "accessible_apps does not include other account apps" do
+    agent = agents(:three)
+    assert_not_includes agent.accessible_apps, custom_apps(:other_account_app)
   end
 
   test "destroying agent destroys accesses" do

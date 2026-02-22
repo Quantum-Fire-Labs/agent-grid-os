@@ -136,6 +136,63 @@ class Agent::Tools::AppDataToolsTest < ActiveSupport::TestCase
     assert_match /Error.*no app named/, result
   end
 
+  # --- cross-agent granted access ---
+
+  test "granted agent can list tables" do
+    granted_agent = agents(:three) # has granted access to slideshow via fixture
+    app = custom_apps(:slideshow)
+    table = "t_#{SecureRandom.hex(6)}"
+    app.create_table(table, [ { "name" => "col", "type" => "TEXT" } ])
+
+    result = Agent::Tools::ListAppTables.new(agent: granted_agent, arguments: { "app" => "slideshow" }).call
+
+    assert_match table, result
+  ensure
+    app.drop_table(table) if table
+  end
+
+  test "granted agent can query app data" do
+    granted_agent = agents(:three)
+    app = custom_apps(:slideshow)
+    table = "t_#{SecureRandom.hex(6)}"
+    app.create_table(table, [ { "name" => "val", "type" => "TEXT" } ])
+    app.insert_row(table, { "val" => "hello" })
+
+    result = Agent::Tools::QueryAppData.new(
+      agent: granted_agent, arguments: { "app" => "slideshow", "table" => table }
+    ).call
+
+    assert_match /1 row/, result
+    assert_match /hello/, result
+  ensure
+    app.drop_table(table) if table
+  end
+
+  test "granted agent can insert app data" do
+    granted_agent = agents(:three)
+    app = custom_apps(:slideshow)
+    table = "t_#{SecureRandom.hex(6)}"
+    app.create_table(table, [ { "name" => "val", "type" => "TEXT" } ])
+
+    result = Agent::Tools::InsertAppData.new(
+      agent: granted_agent, arguments: { "app" => "slideshow", "table" => table, "data" => { "val" => "inserted" } }
+    ).call
+
+    assert_match /Inserted row/, result
+    assert_includes app.query(table).map { |r| r["val"] }, "inserted"
+  ensure
+    app.drop_table(table) if table
+  end
+
+  test "non-granted agent cannot access app" do
+    non_granted_agent = agents(:three)
+    result = Agent::Tools::ListAppTables.new(
+      agent: non_granted_agent, arguments: { "app" => "draft-app" }
+    ).call
+
+    assert_match /Error.*no app named 'draft-app'/, result
+  end
+
   # --- tool definitions ---
 
   test "all tools have valid definitions" do
