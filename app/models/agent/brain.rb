@@ -70,7 +70,16 @@ class Agent::Brain
         if msg.role == "user" && msg.user.present? && conversation.kind_group?
           content = "[#{msg.user.first_name}]: #{content}"
         end
-        entry = { role: msg.role, content: content }
+        # Remap "system" messages in conversation history to "user" role
+        # with a prefix. LLMs don't expect system messages mid-conversation
+        # and treat them as new instructions, causing duplicate responses.
+        if msg.role == "system"
+          content = "[System] #{content}"
+          role = "user"
+        else
+          role = msg.role
+        end
+        entry = { role: role, content: content }
         entry[:tool_calls] = msg.tool_calls if msg.tool_calls.present?
         entry[:tool_call_id] = msg.tool_call_id if msg.tool_call_id.present?
         messages << entry
