@@ -1,5 +1,5 @@
 class Agent::Brain
-  MAX_ITERATIONS = 10
+  MAX_ITERATIONS = 50
 
   attr_reader :agent, :conversation
 
