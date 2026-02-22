@@ -43,8 +43,8 @@ class Agents::WorkspacesControllerTest < ActionDispatch::IntegrationTest
   private
   def stub_docker_calls(&block)
     original_method = Open3.method(:capture3)
-    fake = ->(*args) { ["", "", Struct.new(:success?, :exitstatus).new(false, 1)] }
-    
+    fake = ->(*args) { [ "", "", Struct.new(:success?, :exitstatus).new(false, 1) ] }
+
     Open3.define_singleton_method(:capture3, &fake)
     block.call
   ensure
