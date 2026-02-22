@@ -241,5 +241,4 @@ class Agent::Workspace
 
       raise DockerError, "docker #{args.first} exited #{status.exitstatus}: #{stderr.strip}"
     end
-
 end

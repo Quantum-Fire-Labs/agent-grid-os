@@ -31,7 +31,7 @@ class Agents::WorkspacesController < ApplicationController
 
   def create
     workspace = Agent::Workspace.new(@agent)
-    entry = params.expect(entry: [:name, :type, :path])
+    entry = params.expect(entry: [ :name, :type, :path ])
 
     full_path = File.join(entry[:path].presence || ".", entry[:name])
     safe_path = workspace.sanitized_path(full_path)
