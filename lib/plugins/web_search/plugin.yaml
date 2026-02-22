@@ -1,0 +1,28 @@
+name: web_search
+type: tool
+version: 1.0.0
+description: "Search the web using DuckDuckGo. No API key required."
+execution: platform
+entrypoint: web_search.rb
+
+tools:
+  - name: web_search
+    description: "Search the web using DuckDuckGo. Returns up to 8 results with titles, URLs, and snippets. Use this for current information, documentation lookups, or research."
+    parameters:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "The search query"
+      required:
+        - query
+
+permissions:
+  network:
+    - html.duckduckgo.com
+
+packages: []
+config: []
+
+instructions: |
+  You have a `web_search` tool available. Use it to find current information, look up documentation, or research topics the user asks about. Results include titles, URLs, and snippets you can reference or follow up on with `web_fetch`.

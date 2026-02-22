@@ -12,7 +12,7 @@ class Plugin < ApplicationRecord
   enum :execution, %w[ sandbox platform ].index_by(&:itself), prefix: true
 
   validates :name, presence: true,
-    format: { with: /\A[a-z][a-z0-9\-]{0,49}\z/, message: "must start with a letter and contain only lowercase letters, numbers, and hyphens" },
+    format: { with: /\A[a-z][a-z0-9_]{0,49}\z/, message: "must start with a letter and contain only lowercase letters, numbers, and underscores" },
     uniqueness: { scope: :account_id }
   validate :tool_names_unique, on: :create
 

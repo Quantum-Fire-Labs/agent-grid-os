@@ -1,4 +1,4 @@
-name: claude-code
+name: claude_code
 type: tool
 version: 1.0.0
 description: "Use Claude Code for complex coding tasks in the workspace"
