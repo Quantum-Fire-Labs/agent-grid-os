@@ -133,6 +133,16 @@ class Agent::PromptBuilder
         - `await AgentGridOS.kv.list(namespace)` — returns `[{key, value}, ...]`
         - `await AgentGridOS.kv.delete(namespace, key)`
 
+        ### App data tools
+        You can read and write app data directly during conversation (without the browser SDK):
+        - `list_app_tables` — list all tables in an app's database
+        - `query_app_data` — query rows from a table (supports `where`, `limit`, `offset`)
+        - `insert_app_data` — insert a row into a table
+        - `update_app_data` — update a row by ID
+        - `delete_app_data` — delete a row by ID
+
+        All data tools take an `app` parameter (the app name) to identify which app's database to use.
+
         ### Tips
         - Use inline `<script>` and `<style>` tags for simple apps, or reference separate files via relative paths
         - The CSRF token is handled automatically by the SDK

@@ -17,7 +17,12 @@ class Agent::ToolRegistry
     "unregister_tool"    => Agent::Tools::UnregisterTool,
     "list_custom_tools"  => Agent::Tools::ListCustomTools,
     "register_app"       => Agent::Tools::RegisterApp,
-    "unregister_app"     => Agent::Tools::UnregisterApp
+    "unregister_app"     => Agent::Tools::UnregisterApp,
+    "list_app_tables"    => Agent::Tools::ListAppTables,
+    "query_app_data"     => Agent::Tools::QueryAppData,
+    "insert_app_data"    => Agent::Tools::InsertAppData,
+    "update_app_data"    => Agent::Tools::UpdateAppData,
+    "delete_app_data"    => Agent::Tools::DeleteAppData
   }.freeze
 
   def self.definitions(agent:)
