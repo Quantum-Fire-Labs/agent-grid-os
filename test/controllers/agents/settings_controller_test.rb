@@ -60,6 +60,31 @@ class Agents::SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_nil @agent.configs.find_by(key: "voice")
   end
 
+  test "update enables orchestrator" do
+    refute @agent.orchestrator?
+
+    patch agent_settings_path(@agent), params: { agent: { orchestrator: "true" } }
+
+    assert_redirected_to agent_settings_path(@agent)
+    assert @agent.reload.orchestrator?
+  end
+
+  test "update disables orchestrator" do
+    @agent.update!(orchestrator: true)
+
+    patch agent_settings_path(@agent), params: { agent: { orchestrator: "false" } }
+
+    assert_redirected_to agent_settings_path(@agent)
+    refute @agent.reload.orchestrator?
+  end
+
+  test "orchestrator update does not process agent_settings params" do
+    patch agent_settings_path(@agent), params: { agent: { orchestrator: "true" }, agent_settings: { voice: "nova" } }
+
+    assert_redirected_to agent_settings_path(@agent)
+    assert_nil @agent.configs.find_by(key: "voice"), "voice config should not have been saved"
+  end
+
   test "show requires authentication" do
     sign_out
     get agent_settings_path(@agent)

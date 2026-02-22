@@ -30,17 +30,31 @@ class AgentsController < ApplicationController
   end
 
   def new
+    @personas = Persona.all
     @agent = Agent.new
+
+    if params[:persona].present?
+      persona = Persona.find(params[:persona])
+      @agent.assign_attributes(persona.agent_attributes)
+      @from_persona = persona
+    end
+  rescue Persona::NotFound
+    redirect_to new_agent_path
   end
 
   def create
     @agent = Current.account.agents.build(agent_params)
     @agent.name = @agent.name.to_s.strip
-    @agent.personality = PERSONALITY_PRESETS.fetch(@agent.personality.to_s, "")
+
+    unless params[:from_persona].present?
+      @agent.personality = PERSONALITY_PRESETS.fetch(@agent.personality.to_s, "")
+    end
 
     if @agent.save
       redirect_to @agent, notice: "Agent created."
     else
+      @personas = Persona.all
+      @from_persona = Persona.find(params[:from_persona]) if params[:from_persona].present?
       render :new, status: :unprocessable_entity
     end
   end

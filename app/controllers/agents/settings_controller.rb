@@ -15,6 +15,8 @@ class Agents::SettingsController < ApplicationController
       Config.find_by(configurable: Current.account, key: "elevenlabs_model")&.value ||
       Agent::Audio::ElevenlabsTts::DEFAULT_MODEL
 
+    @orchestrator = @agent.orchestrator?
+
     elevenlabs_key = KeyChain.find_by(owner: @agent, name: "elevenlabs")&.api_key ||
       KeyChain.find_by(owner: Current.account, name: "elevenlabs")&.api_key
     api_key = @effective_tts_provider == "elevenlabs" ? elevenlabs_key : nil
@@ -22,6 +24,12 @@ class Agents::SettingsController < ApplicationController
   end
 
   def update
+    if params[:agent].present? && params[:agent].key?(:orchestrator)
+      @agent.update!(orchestrator: params[:agent][:orchestrator] == "true")
+      redirect_to agent_settings_path(@agent), notice: "Settings saved."
+      return
+    end
+
     settings = params[:agent_settings]
 
     save_config("voice", settings[:voice]) if settings[:voice].present?

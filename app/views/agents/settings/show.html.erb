@@ -7,6 +7,20 @@
     <% end %>
 
     <%= form_with url: agent_settings_path(@agent), method: :patch, data: { controller: "auto-submit", turbo_frame: "_top" } do %>
+      <input type="hidden" name="agent[orchestrator]" value="false">
+      <label class="switch-label">
+        <span class="switch">
+          <%= check_box_tag "agent[orchestrator]", "true", @orchestrator, class: "switch-input", data: { action: "auto-submit#submit" } %>
+          <span class="switch-track"></span>
+        </span>
+        <span class="switch-text">
+          <span class="switch-title">Orchestrator</span>
+          <span class="switch-hint">Enables meta-capabilities like creating and managing other agents.</span>
+        </span>
+      </label>
+    <% end %>
+
+    <%= form_with url: agent_settings_path(@agent), method: :patch, data: { controller: "auto-submit", turbo_frame: "_top" } do %>
       <input type="hidden" name="agent_settings[tts_enabled]" value="false">
       <label class="switch-label">
         <span class="switch">

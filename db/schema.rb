@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_21_184544) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_22_051958) do
   create_table "accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -86,6 +86,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_21_184544) do
     t.string "model"
     t.string "name"
     t.string "network_mode"
+    t.boolean "orchestrator", default: false, null: false
     t.text "personality"
     t.string "status"
     t.string "title"
