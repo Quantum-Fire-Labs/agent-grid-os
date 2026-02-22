@@ -10,7 +10,7 @@ class Agent::PromptBuilder
     parts << identity
     parts << personality if agent.personality.present?
     parts << instructions if agent.instructions.present?
-    parts << network_access
+    parts << network_access if agent.workspace_enabled?
     parts << skills_instructions if agent.respond_to?(:skills) && agent.account.skills.any?
     parts << plugin_instructions if agent.plugins.any?
     parts << apps_context if agent.workspace_enabled? || agent.custom_apps.any?
