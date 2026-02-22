@@ -16,7 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash agent
+RUN useradd -m -s /bin/bash agent && \
+    apt-get update && apt-get install -y --no-install-recommends sudo && \
+    echo "agent ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    rm -rf /var/lib/apt/lists/*
 USER agent
 WORKDIR /workspace
 
