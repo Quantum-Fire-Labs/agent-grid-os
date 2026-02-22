@@ -1,0 +1,6 @@
+<%= render "settings/layout" do %>
+  <div class="settings-section">
+    <h2 class="settings-section-title">Add keychain</h2>
+    <%= render "form", key_chain: @key_chain, url: settings_key_chains_path %>
+  </div>
+<% end %>

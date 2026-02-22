@@ -1,0 +1,35 @@
+<%= form_with model: key_chain, url: url, class: "settings-form", data: { turbo_frame: "_top" } do |form| %>
+  <div class="form-group">
+    <%= form.label :name %>
+    <%= form.text_field :name, placeholder: "e.g. OPENAI_API_KEY" %>
+  </div>
+
+  <div class="form-group">
+    <%= form.label :secret, "Secret value" %>
+    <%= form.password_field :secret, placeholder: key_chain.persisted? ? "Leave blank to keep current" : "Enter secret value" %>
+    <% if key_chain.persisted? %>
+      <p class="form-hint">Leave blank to keep the existing secret.</p>
+    <% end %>
+  </div>
+
+  <div class="form-group">
+    <label class="switch-label">
+      <span class="switch">
+        <%= form.check_box :sandbox_accessible, class: "switch-input" %>
+        <span class="switch-track"></span>
+      </span>
+      <span class="switch-text">
+        <span class="switch-title">Inject into workspaces</span>
+        <span class="switch-hint">Expose this secret as an environment variable in agent sandbox containers.</span>
+      </span>
+    </label>
+    <div class="form-callout form-callout-warn">
+      Agents and their tools can read environment variables. Only enable this for secrets the agent needs, such as third-party API keys. Avoid injecting credentials that grant access to your own infrastructure.
+    </div>
+  </div>
+
+  <div class="form-actions-inline">
+    <%= form.submit key_chain.persisted? ? "Update keychain" : "Add keychain", class: "btn btn-primary btn-sm" %>
+    <%= link_to "Cancel", settings_key_chains_path, class: "btn btn-ghost btn-sm" %>
+  </div>
+<% end %>

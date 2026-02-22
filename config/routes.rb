@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     resources :models, only: %i[index create update destroy], module: :agents
     resource :settings, only: %i[show update], module: :agents
     resources :plugins, only: %i[index create destroy], module: :agents
+    resources :key_chains, only: %i[index new create edit update destroy], module: :agents
     resources :memories, only: %i[index edit update destroy], module: :agents
     resource :workspace, only: %i[show update create], module: :agents
     resource :terminal, only: :show, module: :agents
@@ -31,6 +32,7 @@ Rails.application.routes.draw do
     resource :profile, only: %i[show update], module: :settings
     resource :account, only: %i[show update], module: :settings
     resources :providers, module: :settings
+    resources :key_chains, module: :settings
     resources :provider_models, only: :index, module: :settings
     resources :oauth_connections, only: %i[show create destroy], module: :settings, param: :provider_name
     resource :voice, only: %i[show update], module: :settings

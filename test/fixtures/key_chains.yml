@@ -17,3 +17,21 @@ chatgpt:
   owner: one (Account)
   name: chatgpt
   secrets: '{"access_token": "test-access-token", "oauth_account_id": "test-account-id"}'
+
+account_sandbox_key:
+  owner: one (Account)
+  name: MY_API_KEY
+  secrets: '{"api_key": "secret-account-value"}'
+  sandbox_accessible: true
+
+agent_sandbox_key:
+  owner: one (Agent)
+  name: AGENT_SECRET
+  secrets: '{"api_key": "secret-agent-value"}'
+  sandbox_accessible: true
+
+agent_override_key:
+  owner: one (Agent)
+  name: MY_API_KEY
+  secrets: '{"api_key": "secret-agent-override"}'
+  sandbox_accessible: true

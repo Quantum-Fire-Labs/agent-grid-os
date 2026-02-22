@@ -1,0 +1,32 @@
+<%= render "settings/layout" do %>
+  <div class="settings-section">
+    <div class="settings-section-header">
+      <h2 class="settings-section-title">Keychains</h2>
+      <%= link_to "Add keychain", new_settings_key_chain_path, class: "btn btn-primary btn-sm" %>
+    </div>
+
+    <% if @key_chains.any? %>
+      <div class="provider-list">
+        <% @key_chains.each do |key_chain| %>
+          <div class="provider-row">
+            <div class="provider-info">
+              <span class="provider-name"><%= key_chain.name %></span>
+              <span class="provider-model secret-masked">••••••••</span>
+              <% if key_chain.sandbox_accessible? %>
+                <span class="provider-badge">Sandbox</span>
+              <% end %>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-actions">
+                <%= link_to "Edit", edit_settings_key_chain_path(key_chain), class: "btn btn-ghost btn-xs" %>
+                <%= button_to "Remove", settings_key_chain_path(key_chain), method: :delete, class: "btn btn-ghost btn-xs text-danger", data: { turbo_confirm: "Remove this keychain?" } %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="settings-empty">No keychains configured. Add one to store API keys and secrets.</p>
+    <% end %>
+  </div>
+<% end %>

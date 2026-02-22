@@ -1,0 +1,10 @@
+<div class="agent-profile" data-status="<%= @agent.status %>">
+  <%= render "agents/header", active_tab: "keychains" %>
+
+  <div class="agent-profile-body">
+    <div class="agent-detail-section">
+      <h3 class="section-label">Edit keychain</h3>
+      <%= render "form", key_chain: @key_chain, url: agent_key_chain_path(@agent, @key_chain) %>
+    </div>
+  </div>
+</div>

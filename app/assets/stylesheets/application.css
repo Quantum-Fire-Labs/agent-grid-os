@@ -1328,6 +1328,21 @@ input::placeholder {
   line-height: 1.4;
 }
 
+.form-callout {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  background-color: var(--bg-tertiary);
+  border-left: 3px solid var(--text-tertiary);
+  border-radius: 4px;
+  padding: 0.625rem 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.form-callout-warn {
+  border-left-color: var(--warning, #d97706);
+}
+
 fieldset {
   border: none;
   padding: 0;
@@ -1788,6 +1803,12 @@ fieldset {
 .provider-badge-secondary {
   color: var(--text-tertiary);
   background-color: var(--bg-tertiary);
+}
+
+.secret-masked {
+  font-family: monospace;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
 }
 
 .provider-actions {

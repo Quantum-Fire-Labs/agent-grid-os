@@ -9,6 +9,7 @@
       <% if Current.user.admin? %>
         <%= link_to "Account", settings_account_path, class: "settings-nav-link #{"settings-nav-link-active" if controller_name == "accounts"}" %>
         <%= link_to "Providers", settings_providers_path, class: "settings-nav-link #{"settings-nav-link-active" if controller_name == "providers"}" %>
+        <%= link_to "Keychains", settings_key_chains_path, class: "settings-nav-link #{"settings-nav-link-active" if controller_name == "key_chains"}" %>
         <%= link_to "Voice & Speech", settings_voice_path, class: "settings-nav-link #{"settings-nav-link-active" if controller_name == "voices"}" %>
         <%= link_to "Users", settings_users_path, class: "settings-nav-link #{"settings-nav-link-active" if controller_name == "users"}" %>
       <% end %>

@@ -204,6 +204,10 @@ class Agent::Workspace
         "-w", "/workspace"
       ]
 
+      resolved_keychains.each do |kc|
+        cmd += [ "-e", "#{kc.name}=#{kc.api_key}" ]
+      end
+
       agent.plugins.each do |plugin|
         plugin.mounts.each do |mount|
           source = resolve_mount_source(mount["source"], plugin)
@@ -233,6 +237,12 @@ class Agent::Workspace
       else
         plugin.path.join(source).to_s
       end
+    end
+
+    def resolved_keychains
+      account_kcs = agent.account.key_chains.where(sandbox_accessible: true).index_by(&:name)
+      agent_kcs = agent.key_chains.where(sandbox_accessible: true).index_by(&:name)
+      account_kcs.merge(agent_kcs).values
     end
 
     def run_docker(*args)
