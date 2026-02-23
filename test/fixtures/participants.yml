@@ -1,9 +1,21 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  conversation: one
-  user: one
+  chat: one
+  participatable_type: User
+  participatable_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
 
 two:
-  conversation: two
-  user: two
+  chat: two
+  participatable_type: User
+  participatable_id: <%= ActiveRecord::FixtureSet.identify(:two) %>
+
+three:
+  chat: one
+  participatable_type: Agent
+  participatable_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+
+four:
+  chat: two
+  participatable_type: Agent
+  participatable_id: <%= ActiveRecord::FixtureSet.identify(:two) %>

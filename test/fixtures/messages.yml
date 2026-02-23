@@ -1,10 +1,13 @@
 one:
-  conversation: one
+  chat: one
   role: user
   content: Hello there
-  user: one
+  sender_type: User
+  sender_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
 
 two:
-  conversation: one
+  chat: one
   role: assistant
   content: Hi! How can I help?
+  sender_type: Agent
+  sender_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
