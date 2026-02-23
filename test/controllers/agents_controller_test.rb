@@ -67,6 +67,16 @@ class AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal raw_personality, Agent.last.personality
   end
 
+  test "create from persona applies recommended_settings" do
+    post agents_path, params: {
+      from_persona: "the_orchestrator",
+      agent: { name: "ops", title: "Ops", description: "Desc", personality: "Composed." }
+    }
+
+    assert_redirected_to agent_path(Agent.last)
+    assert Agent.last.orchestrator?, "expected orchestrator to be enabled"
+  end
+
   test "create with invalid params re-renders new form" do
     post agents_path, params: { agent: { name: "" } }
 

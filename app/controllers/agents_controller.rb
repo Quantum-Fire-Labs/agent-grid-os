@@ -46,7 +46,10 @@ class AgentsController < ApplicationController
     @agent = Current.account.agents.build(agent_params)
     @agent.name = @agent.name.to_s.strip
 
-    unless params[:from_persona].present?
+    if params[:from_persona].present?
+      persona = Persona.find(params[:from_persona])
+      @agent.assign_attributes(persona.recommended_settings.symbolize_keys)
+    else
       @agent.personality = PERSONALITY_PRESETS.fetch(@agent.personality.to_s, "")
     end
 

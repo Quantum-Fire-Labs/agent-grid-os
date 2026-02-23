@@ -33,6 +33,20 @@ class CustomApp < ApplicationRecord
     end
   end
 
+  def transfer_to(new_agent)
+    return if new_agent == agent
+
+    old_agent = agent
+
+    transaction do
+      update!(agent: new_agent)
+      custom_app_agent_accesses.where(agent: new_agent).destroy_all
+    end
+
+    recreate_agent_workspace(old_agent)
+    recreate_agent_workspace(new_agent)
+  end
+
   private
     def set_account_from_agent
       self.account ||= agent&.account
@@ -51,9 +65,13 @@ class CustomApp < ApplicationRecord
     end
 
     def recreate_creator_workspace
-      return unless agent.workspace_enabled?
+      recreate_agent_workspace(agent)
+    end
 
-      workspace = Agent::Workspace.new(agent)
+    def recreate_agent_workspace(target_agent)
+      return unless target_agent.workspace_enabled?
+
+      workspace = Agent::Workspace.new(target_agent)
       return unless workspace.exists?
 
       workspace.destroy

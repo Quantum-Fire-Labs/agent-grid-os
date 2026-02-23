@@ -18,6 +18,7 @@ Rails.application.routes.draw do
   resources :custom_apps, only: [ :index, :show ], path: "apps" do
     get "assets/*path", to: "custom_apps#asset", as: :asset, format: false
     resource :settings, only: :show, module: :custom_apps
+    resource :transfer, only: :create, module: :custom_apps
     resources :users, only: %i[create destroy], module: :custom_apps
     resources :agent_accesses, only: %i[create destroy], module: :custom_apps
     resources :tables, only: [ :index, :create, :destroy ], module: :custom_apps do

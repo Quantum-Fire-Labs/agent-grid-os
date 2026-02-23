@@ -26,6 +26,17 @@
         <div class="app-settings-meta-row">
           <span class="app-settings-meta-label">Owner</span>
           <span class="app-settings-meta-value"><%= @custom_app.agent.name %></span>
+          <% if @transfer_agents.any? %>
+            <details class="app-settings-transfer">
+              <summary class="btn btn-ghost btn-sm">Transfer</summary>
+              <div class="app-settings-transfer-form">
+                <%= form_with url: custom_app_transfer_path(@custom_app), method: :post do |f| %>
+                  <%= f.select :agent_id, @transfer_agents.map { |a| [a.name, a.id] }, {}, class: "form-select form-select-sm" %>
+                  <%= f.submit "Transfer Ownership", class: "btn btn-primary btn-sm", data: { turbo_confirm: "Transfer #{@custom_app.name} to a different agent? This will move the app and recreate affected workspaces." } %>
+                <% end %>
+              </div>
+            </details>
+          <% end %>
         </div>
         <div class="app-settings-meta-row">
           <span class="app-settings-meta-label">Slug</span>

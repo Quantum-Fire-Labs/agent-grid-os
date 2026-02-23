@@ -170,7 +170,7 @@ class Agent::Workspace
       FileUtils.mkdir_p(path)
       FileUtils.mkdir_p(home_path)
       run_docker(*build_run_command)
-      # Fix ownership inside the container
+      cleanup_stale_app_directories
       run_docker("exec", "-u", "root", container_name, "chown", "-R", "agent:agent", "/home/agent")
       run_docker("exec", "-u", "root", container_name, "chown", "-R", "agent:agent", "/workspace")
       Rails.logger.info("[Agent::Workspace] Created container for agent=#{agent.name}")
@@ -226,6 +226,23 @@ class Agent::Workspace
 
       cmd += [ IMAGE, "sleep", "infinity" ]
       cmd
+    end
+
+    # Remove stale app directories left behind by previous Docker mount points.
+    # When an app is transferred or access revoked, the old mount-point directory
+    # persists on disk (owned by uid 1001). Runs inside the NEW container after
+    # creation — stale dirs are regular directories here (not mounts), so rm works.
+    def cleanup_stale_app_directories
+      current_slugs = agent.accessible_apps.pluck(:slug).to_set
+      apps_dir = path.join("apps")
+      return unless apps_dir.exist?
+
+      apps_dir.children.each do |child|
+        next unless child.directory?
+        next if current_slugs.include?(child.basename.to_s)
+
+        run_docker("exec", "-u", "root", container_name, "rm", "-rf", "/workspace/apps/#{child.basename}")
+      end
     end
 
     # Translate in-container storage paths to host-side paths for Docker volume mounts.
