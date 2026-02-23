@@ -107,7 +107,7 @@
             </button>
             <audio src="<%= rails_blob_path(message.audio, only_path: true) %>" data-audio-player-target="audio" preload="metadata"></audio>
           </div>
-        <% elsif !is_user && message.content.present? %>
+        <% elsif !is_user && message.content.present? && local_assigns.fetch(:tts_available, false) %>
           <div class="audio-player audio-player-synthesize" data-controller="audio-player" data-audio-player-synthesize-url-value="<%= agent_conversation_message_speech_path(agent, message.conversation, message) %>">
             <button class="audio-player-btn" data-action="audio-player#toggle" data-audio-player-target="playBtn" type="button" aria-label="Play audio">
               <svg class="audio-player-icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>

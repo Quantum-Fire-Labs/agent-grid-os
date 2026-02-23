@@ -126,7 +126,7 @@
               <div id="chat-pagination-sentinel" data-chat-pagination-target="sentinel"></div>
             <% end %>
             <% @messages.each do |message| %>
-              <%= render "agents/conversations/messages/message", message: message, agent: @agent %>
+              <%= render "agents/conversations/messages/message", message: message, agent: @agent, tts_available: @audio_available %>
             <% end %>
           </div>
         </div>

@@ -15,7 +15,7 @@ class Agents::Conversations::MessagesController < ApplicationController
     @has_older = scope.offset(50).exists?
 
     render partial: "agents/conversations/messages/batch",
-           locals: { messages: @messages, agent: @agent, has_older: @has_older }
+           locals: { messages: @messages, agent: @agent, has_older: @has_older, tts_available: Agent::Audio.new(@agent).available? }
   end
 
   def create
@@ -42,7 +42,7 @@ class Agents::Conversations::MessagesController < ApplicationController
 
     message_html = ApplicationController.render(
       partial: "agents/conversations/messages/message",
-      locals: { message: @message, agent: @agent }
+      locals: { message: @message, agent: @agent, tts_available: Agent::Audio.new(@agent).available? }
     )
 
     typing_html = if agent_tagged
