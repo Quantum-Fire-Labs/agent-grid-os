@@ -81,12 +81,12 @@ class Agent::Workspace
     { stdout: "", stderr: "Error: command timed out after #{timeout}s", exit_code: 124 }
   end
 
-  def exec_later(command, chat:, label:, timeout: 600)
-    Agent::WorkspaceExecJob.perform_later(agent, chat, command, label: label, timeout: timeout)
+  def exec_later(command, chat:, label:, timeout: 600, stdin: nil)
+    Agent::WorkspaceExecJob.perform_later(agent, chat, command, label: label, timeout: timeout, stdin: stdin)
   end
 
-  def deliver_exec_result(command, chat:, label:, timeout: 600)
-    result = exec(command, timeout: timeout)
+  def deliver_exec_result(command, chat:, label:, timeout: 600, stdin: nil)
+    result = exec(command, stdin: stdin, timeout: timeout)
 
     output = +""
     output << result[:stdout] if result[:stdout].present?

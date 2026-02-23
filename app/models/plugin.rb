@@ -39,13 +39,22 @@ class Plugin < ApplicationRecord
     end
   end
 
+  def build_tool_stdin(tool_schema, arguments)
+    param = tool_schema["stdin_param"]
+    return nil unless param
+
+    arguments[param].to_s.presence
+  end
+
   def build_tool_command(tool_schema, arguments, agent: nil)
     require "shellwords"
 
     command = tool_schema["command"].to_s.dup
+    stdin_param = tool_schema["stdin_param"]
 
     # Substitute {param} placeholders in the command template
     arguments.each do |key, value|
+      next if key == stdin_param
       next if value.is_a?(TrueClass) || value.is_a?(FalseClass)
       command.gsub!("{#{key}}", Shellwords.escape(value.to_s))
     end

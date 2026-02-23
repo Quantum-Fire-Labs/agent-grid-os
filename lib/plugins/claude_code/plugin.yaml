@@ -10,16 +10,21 @@ tools:
     description: "Delegate a coding task to Claude Code. Runs asynchronously — returns immediately and delivers the result when done."
     async: true
     timeout: 600
-    command: "claude -p {prompt} --dangerously-skip-permissions --output-format text"
+    command: "claude -p --dangerously-skip-permissions --output-format text"
+    stdin_param: prompt
     flags:
       continue: "-c"
       session_id: "-r {session_id}"
+      directory: "--cwd {directory}"
     parameters:
       type: object
       properties:
         prompt:
           type: string
           description: "The task for Claude Code"
+        directory:
+          type: string
+          description: "Working directory to run from (relative to /workspace or absolute path)"
         continue:
           type: boolean
           description: "Continue the most recent session"
@@ -56,6 +61,50 @@ instructions: |
   ```
 
   All work happens in `/workspace`. Claude Code can read, write, and execute code there.
+
+  ## Writing Prompts
+
+  Keep prompts short and directive. Claude Code can read files and explore the codebase itself — you do NOT need to paste file contents, code snippets, or long context into the prompt.
+
+  **Good — short directive:**
+  ```
+  prompt: "Add email validation to the User model in app/models/user.rb"
+  ```
+
+  **Good — specific task:**
+  ```
+  prompt: "Fix the failing test in test/models/order_test.rb — the total calculation is off by one"
+  ```
+
+  **Bad — pasting code into the prompt:**
+  ```
+  prompt: "Here is the current user model:\n\nclass User < ApplicationRecord\n  validates :name ...\n  [50 more lines]\nend\n\nPlease add email validation"
+  ```
+
+  **Bad — dumping conversation context:**
+  ```
+  prompt: "The user said they want ... and then I checked ... and the file contains ... [long recap]. Now do X."
+  ```
+
+  Rules:
+  - **Never paste file contents** into the prompt — Claude Code will read files itself
+  - **Never paste code snippets** — reference the file path instead
+  - **Never recap the conversation** — state the task directly
+  - **Reference files by path** when relevant (e.g. "in app/models/user.rb")
+  - **One clear objective per call** — don't bundle unrelated tasks
+
+  ## Directory
+
+  By default, Claude Code runs from `/workspace`. To run from a subdirectory:
+
+  ```
+  Tool: claude_code
+  Arguments:
+    prompt: "run the tests"
+    directory: "my-project"
+  ```
+
+  The `directory` can be relative to `/workspace` (e.g. `my-project/src`) or an absolute path.
 
   ## Sessions
 

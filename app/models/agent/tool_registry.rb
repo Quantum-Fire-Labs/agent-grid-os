@@ -100,11 +100,12 @@ class Agent::ToolRegistry
     return "Error: async plugin tool requires a chat context" unless chat
 
     command = plugin.build_tool_command(tool_schema, arguments, agent: agent)
+    stdin = plugin.build_tool_stdin(tool_schema, arguments)
     timeout = tool_schema["timeout"] || 600
     label = tool_schema["name"]
 
     workspace = Agent::Workspace.new(agent)
-    workspace.exec_later(command, chat: chat, label: label, timeout: timeout)
+    workspace.exec_later(command, chat: chat, label: label, timeout: timeout, stdin: stdin)
 
     "#{label} started in the background. You'll receive the result when it completes."
   end
