@@ -11,6 +11,8 @@ class Agent < ApplicationRecord
   has_many :agent_models, dependent: :destroy
   has_many :providers, through: :agent_models
   has_many :custom_tools, dependent: :destroy
+  has_many :agent_skills, dependent: :destroy
+  has_many :skills, through: :agent_skills
   has_many :custom_apps, dependent: :destroy
   has_many :agent_plugins, dependent: :destroy
   has_many :plugins, through: :agent_plugins

@@ -58,6 +58,15 @@ class Agent::ToolRegistryTest < ActiveSupport::TestCase
     assert_not_includes names, "update_agent"
   end
 
+  test "definitions always include skill tools" do
+    agent = agents(:one)
+    names = tool_names(agent)
+
+    assert_includes names, "create_skill"
+    assert_includes names, "remove_skill"
+    assert_includes names, "list_skills"
+  end
+
   private
     def tool_names(agent)
       Agent::ToolRegistry.definitions(agent: agent).map { |d| d[:function][:name] }

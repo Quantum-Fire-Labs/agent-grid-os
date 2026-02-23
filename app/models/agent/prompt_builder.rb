@@ -11,7 +11,7 @@ class Agent::PromptBuilder
     parts << personality if agent.personality.present?
     parts << instructions if agent.instructions.present?
     parts << network_access if agent.workspace_enabled?
-    parts << skills_instructions if agent.respond_to?(:skills) && agent.account.skills.any?
+    parts << skills_instructions if agent.skills.any?
     parts << plugin_instructions if agent.plugins.any?
     parts << orchestrator_context if agent.orchestrator?
     parts << apps_context if agent.workspace_enabled? || agent.custom_apps.any? || agent.granted_apps.any?
@@ -51,14 +51,11 @@ class Agent::PromptBuilder
     end
 
     def skills_instructions
-      enabled_skills = agent.account.skills
-      return if enabled_skills.none?
+      sections = agent.skills.map do |skill|
+        "### #{skill.name}\n#{skill.body}"
+      end
 
-      sections = enabled_skills.map do |skill|
-        "### #{skill.name}\n#{skill.body}" if skill.body.present?
-      end.compact
-
-      "## Skills\n\n#{sections.join("\n\n")}" if sections.any?
+      "## Skills\n\n#{sections.join("\n\n")}"
     end
 
     def plugin_instructions

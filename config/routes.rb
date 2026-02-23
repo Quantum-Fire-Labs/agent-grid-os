@@ -13,8 +13,8 @@ Rails.application.routes.draw do
     resource :memory_wipe, only: %i[new create], module: :agents
     resource :factory_reset, only: :create, module: :agents
     resource :clone, only: %i[new create], module: :agents
+    resources :skills, only: %i[index create destroy], module: :agents
   end
-  resources :skills
   resources :custom_apps, only: [ :index, :show ], path: "apps" do
     get "assets/*path", to: "custom_apps#asset", as: :asset, format: false
     resource :settings, only: :show, module: :custom_apps

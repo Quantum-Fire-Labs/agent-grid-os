@@ -1,13 +1,21 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
-one:
+code_review:
   account: one
-  name: MyString
-  description: MyText
-  body: MyText
+  name: Code Review
+  description: Guidelines for reviewing code
+  body: |
+    When reviewing code, check for:
+    - Clear naming conventions
+    - Test coverage
+    - Error handling
 
-two:
+api_design:
+  account: one
+  name: API Design
+  description: REST API conventions
+  body: Follow REST conventions for API design.
+
+other_account_skill:
   account: two
-  name: MyString2
-  description: MyText
-  body: MyText
+  name: Support Workflow
+  description: Customer support process
+  body: Follow the escalation process for support tickets.

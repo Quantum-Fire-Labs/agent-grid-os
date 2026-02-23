@@ -1,0 +1,54 @@
+<div class="agent-profile" data-status="<%= @agent.status %>">
+  <%= render "agents/header", active_tab: "skills" %>
+
+  <div class="agent-profile-body">
+    <% if @enabled_skills.any? %>
+      <div class="agent-detail-section">
+        <h3 class="section-label">Enabled Skills</h3>
+        <div class="skills-list">
+          <% @enabled_skills.each do |skill| %>
+            <div class="skill-card">
+              <div class="skill-card-header">
+                <h3 class="skill-name"><%= skill.name %></h3>
+              </div>
+              <% if skill.description.present? %>
+                <p class="skill-description"><%= truncate(skill.description, length: 120) %></p>
+              <% end %>
+              <div class="skill-card-actions">
+                <%= button_to "Disable", agent_skill_path(@agent, @agent_skills_by_skill_id[skill.id]), method: :delete, class: "btn btn-ghost btn-sm" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @available_skills.any? %>
+      <div class="agent-detail-section">
+        <h3 class="section-label">Available Skills</h3>
+        <div class="skills-list">
+          <% @available_skills.each do |skill| %>
+            <div class="skill-card">
+              <div class="skill-card-header">
+                <h3 class="skill-name"><%= skill.name %></h3>
+              </div>
+              <% if skill.description.present? %>
+                <p class="skill-description"><%= truncate(skill.description, length: 120) %></p>
+              <% end %>
+              <div class="skill-card-actions">
+                <%= button_to "Enable", agent_skills_path(@agent, skill_id: skill.id), method: :post, class: "btn btn-primary btn-sm" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @enabled_skills.empty? && @available_skills.empty? %>
+      <div class="empty-state">
+        <h2>No skills available</h2>
+        <p>Skills are instructional text that guide this agent's behavior. Agents can create skills during conversation, or you can create them from the account skills page.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

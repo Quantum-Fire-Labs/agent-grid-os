@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_23_124000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_23_182521) do
   create_table "accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -66,6 +66,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_124000) do
     t.index ["agent_id", "plugin_id"], name: "index_agent_plugins_on_agent_id_and_plugin_id", unique: true
     t.index ["agent_id"], name: "index_agent_plugins_on_agent_id"
     t.index ["plugin_id"], name: "index_agent_plugins_on_plugin_id"
+  end
+
+  create_table "agent_skills", force: :cascade do |t|
+    t.integer "agent_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "skill_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agent_id", "skill_id"], name: "index_agent_skills_on_agent_id_and_skill_id", unique: true
+    t.index ["agent_id"], name: "index_agent_skills_on_agent_id"
+    t.index ["skill_id"], name: "index_agent_skills_on_skill_id"
   end
 
   create_table "agent_users", force: :cascade do |t|
@@ -305,6 +315,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_124000) do
   add_foreign_key "agent_models", "providers"
   add_foreign_key "agent_plugins", "agents"
   add_foreign_key "agent_plugins", "plugins"
+  add_foreign_key "agent_skills", "agents"
+  add_foreign_key "agent_skills", "skills"
   add_foreign_key "agent_users", "agents"
   add_foreign_key "agent_users", "users"
   add_foreign_key "agents", "accounts"

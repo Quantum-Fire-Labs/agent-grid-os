@@ -37,7 +37,6 @@
             <%= link_to "Agents", agents_path, class: "nav-link #{"nav-link-active" if controller_name == "agents"}" %>
             <%= link_to "Apps", custom_apps_path, class: "nav-link #{"nav-link-active" if controller_name == "custom_apps"}" %>
             <% if Current.user.admin? %>
-              <%= link_to "Skills", skills_path, class: "nav-link #{"nav-link-active" if controller_name == "skills"}" %>
               <%= link_to "Plugins", plugins_path, class: "nav-link #{"nav-link-active" if controller_name == "plugins"}" %>
             <% end %>
             <%= link_to "Settings", settings_path, class: "nav-link #{"nav-link-active" if controller_path.start_with?("settings")}" %>

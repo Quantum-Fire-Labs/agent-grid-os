@@ -30,6 +30,22 @@ class Agent::PromptBuilderTest < ActiveSupport::TestCase
     assert_no_match(/draft-app/, prompt.split("Apps you have data access to").last)
   end
 
+  test "includes enabled skills in prompt" do
+    agent = agents(:one) # has code_review skill via fixture
+    prompt = Agent::PromptBuilder.new(agent).system_prompt
+
+    assert_match /## Skills/, prompt
+    assert_match /Code Review/, prompt
+    assert_match /Clear naming conventions/, prompt
+  end
+
+  test "excludes skills section when agent has no skills enabled" do
+    agent = agents(:three) # no agent_skills fixture
+    prompt = Agent::PromptBuilder.new(agent).system_prompt
+
+    assert_no_match(/## Skills/, prompt)
+  end
+
   test "excludes apps section for agent with no apps" do
     agent = Agent.create!(name: "Empty", account: accounts(:one))
     prompt = Agent::PromptBuilder.new(agent).system_prompt

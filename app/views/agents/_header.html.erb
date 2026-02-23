@@ -73,6 +73,11 @@
       <span>Plugins</span>
     <% end %>
 
+    <%= link_to agent_skills_path(@agent), class: "agent-profile-tab #{'agent-profile-tab-active' if active == 'skills'}", data: { turbo_frame: "_top" } do %>
+      <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M4.5 2.25h9a1.5 1.5 0 011.5 1.5v10.5a1.5 1.5 0 01-1.5 1.5h-9a1.5 1.5 0 01-1.5-1.5V3.75a1.5 1.5 0 011.5-1.5z" stroke="currentColor" stroke-width="1.5"/><path d="M6.75 6.75h4.5M6.75 9.75h4.5M6.75 12.75h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>Skills</span>
+    <% end %>
+
     <%= link_to agent_custom_apps_path(@agent), class: "agent-profile-tab #{'agent-profile-tab-active' if active == 'apps'}", data: { turbo_frame: "_top" } do %>
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><rect x="2.25" y="3.75" width="13.5" height="10.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M2.25 6.75h13.5" stroke="currentColor" stroke-width="1.5"/><circle cx="4.5" cy="5.25" r="0.5" fill="currentColor"/><circle cx="6" cy="5.25" r="0.5" fill="currentColor"/><circle cx="7.5" cy="5.25" r="0.5" fill="currentColor"/></svg>
       <span>Apps</span>

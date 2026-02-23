@@ -6,7 +6,10 @@ class Agent::ToolRegistry
     "remember"           => Agent::Tools::Remember,
     "edit_memory"        => Agent::Tools::EditMemory,
     "delete_memory"      => Agent::Tools::DeleteMemory,
-    "recall_memory"      => Agent::Tools::RecallMemory
+    "recall_memory"      => Agent::Tools::RecallMemory,
+    "create_skill"       => Agent::Tools::CreateSkill,
+    "remove_skill"       => Agent::Tools::RemoveSkill,
+    "list_skills"        => Agent::Tools::ListSkills
   }.freeze
 
   DATA_TOOLS = {
