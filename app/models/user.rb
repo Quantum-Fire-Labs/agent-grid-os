@@ -6,6 +6,8 @@ class User < ApplicationRecord
   has_many :conversations, through: :participants
   has_many :agent_users, dependent: :destroy
   has_many :agents, through: :agent_users
+  has_many :custom_app_users, dependent: :destroy
+  has_many :custom_apps, through: :custom_app_users
 
   enum :role, %w[admin member].index_by(&:itself), default: "member"
 

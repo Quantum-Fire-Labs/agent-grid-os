@@ -16,13 +16,13 @@
       "note": "Safe: icon_path is within the agent's sandboxed workspace directory"
     },
     {
-      "fingerprint": "844cb17e458a2406ae18dd5ed91295864d347fdb1e637713d0558283e9108a52",
-      "code": "CustomApp.published.where(:agent => accessible_agents).find(params[:id]).entrypoint_content",
+      "fingerprint": "1b85e37220947cc771e2c62e36aceaf0463a16838cc8635c42af8578b0b47a01",
+      "code": "accessible_custom_apps.published.find(params[:id]).entrypoint_content",
       "note": "Intentional: custom apps serve agent-authored HTML by design"
     },
     {
-      "fingerprint": "8a1c67f803095bfd9bb2aa83aa703f37ce5cffd497987fd0cb6bbbba9be2795c",
-      "code": "send_file(CustomApp.published.where(:agent => accessible_agents).find(params[:custom_app_id]).resolve_asset(params[:path]), :disposition => :inline)",
+      "fingerprint": "87cd80d6e5570f981e2c9d7bc96e9664f8c103bc34f1d748366e72cc215d38ff",
+      "code": "send_file(accessible_custom_apps.published.find(params[:custom_app_id]).resolve_asset(params[:path]), :disposition => :inline)",
       "note": "Safe: resolve_asset validates against directory traversal"
     }
   ],

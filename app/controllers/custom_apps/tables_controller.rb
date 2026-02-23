@@ -30,6 +30,6 @@ class CustomApps::TablesController < ApplicationController
 
   private
     def set_custom_app
-      @custom_app = CustomApp.published.where(agent: accessible_agents).find(params[:custom_app_id])
+      @custom_app = accessible_custom_apps.published.find(params[:custom_app_id])
     end
 end
