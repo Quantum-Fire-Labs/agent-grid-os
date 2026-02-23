@@ -3408,7 +3408,7 @@ body:has(.chat-hub) .main-content {
 
 .app-card {
   background: var(--bg-primary);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -3477,8 +3477,11 @@ body:has(.chat-hub) .main-content {
 }
 
 .app-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 0.75rem 1.25rem;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--border);
 }
 
 .app-card-agent {
