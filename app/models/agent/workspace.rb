@@ -172,7 +172,7 @@ class Agent::Workspace
       run_docker(*build_run_command)
       # Fix ownership inside the container
       run_docker("exec", "-u", "root", container_name, "chown", "-R", "agent:agent", "/home/agent")
-      run_docker("exec", "-u", "root", container_name, "chown", "agent:agent", "/workspace")
+      run_docker("exec", "-u", "root", container_name, "chown", "-R", "agent:agent", "/workspace")
       Rails.logger.info("[Agent::Workspace] Created container for agent=#{agent.name}")
     end
 

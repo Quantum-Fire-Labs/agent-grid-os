@@ -53,7 +53,8 @@ class Agent < ApplicationRecord
   end
 
   def accessible_apps
-    CustomApp.where(id: custom_app_ids + granted_app_ids)
+    CustomApp.where(agent_id: id)
+      .or(CustomApp.where(id: CustomAppAgentAccess.where(agent_id: id).select(:custom_app_id)))
   end
 
   def find_or_create_direct_chat(user)

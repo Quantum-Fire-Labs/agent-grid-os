@@ -13,8 +13,7 @@ class CustomApp < ApplicationRecord
   before_validation :set_name_from_slug, on: :create
   before_validation :set_path_from_slug, on: :create
   after_create :create_files_directory
-  after_create_commit :recreate_creator_workspace
-  after_destroy_commit :recreate_creator_workspace
+  after_commit :recreate_creator_workspace, on: %i[create destroy]
   after_destroy_commit :cleanup_storage
 
   enum :status, %w[ draft published disabled ].index_by(&:itself)
