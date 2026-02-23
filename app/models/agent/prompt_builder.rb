@@ -91,15 +91,15 @@ class Agent::PromptBuilder
 
       parts << data_tools_instructions if agent.custom_apps.any? || agent.granted_apps.any?
 
-      apps = agent.custom_apps.order(:name)
+      apps = agent.custom_apps.order(:slug)
       if apps.any?
-        lines = apps.map { |app| "- #{app.name} (#{app.status}): #{app.description}" }
+        lines = apps.map { |app| "- #{app.slug} (#{app.status}): #{app.description}" }
         parts << "### Your registered apps\n#{lines.join("\n")}"
       end
 
-      granted = agent.granted_apps.where(status: :published).order(:name)
+      granted = agent.granted_apps.where(status: :published).order(:slug)
       if granted.any?
-        lines = granted.map { |app| "- #{app.name}: #{app.description}" }
+        lines = granted.map { |app| "- #{app.slug}: #{app.description}" }
         parts << "### Apps you have data access to\n#{lines.join("\n")}"
       end
 
@@ -159,7 +159,7 @@ class Agent::PromptBuilder
         - `update_app_data` — update a row by ID
         - `delete_app_data` — delete a row by ID
 
-        All data tools take an `app` parameter (the app name) to identify which app's database to use.
+        All data tools take an `app` parameter (the app slug) to identify which app's database to use.
       INSTRUCTIONS
     end
 

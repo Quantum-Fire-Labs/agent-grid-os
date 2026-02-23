@@ -8,7 +8,7 @@ class Agent::Tools::InsertAppData < Agent::Tools::Base
         parameters: {
           type: "object",
           properties: {
-            app: { type: "string", description: "Name of the custom app" },
+            app: { type: "string", description: "Slug of the custom app" },
             table: { type: "string", description: "Table name to insert into" },
             data: { type: "object", description: "Column values as key-value pairs" }
           },
@@ -28,7 +28,7 @@ class Agent::Tools::InsertAppData < Agent::Tools::Base
 
   private
     def find_app!
-      agent.accessible_apps.find_by!(name: arguments["app"])
+      agent.accessible_apps.find_by!(slug: arguments["app"])
     rescue ActiveRecord::RecordNotFound
       "Error: no app named '#{arguments["app"]}' found for this agent."
     end

@@ -7,8 +7,14 @@ class CustomAppTest < ActiveSupport::TestCase
   end
 
   test "valid custom app" do
-    app = CustomApp.new(agent: @agent, account: @account, name: "my-app", description: "Test", path: "apps/test")
+    app = CustomApp.new(agent: @agent, account: @account, slug: "my-app", description: "Test", path: "apps/test")
     assert app.valid?
+  end
+
+  test "requires slug" do
+    app = CustomApp.new(agent: @agent, account: @account, path: "apps/test")
+    assert_not app.valid?
+    assert_includes app.errors[:slug], "can't be blank"
   end
 
   test "requires name" do
@@ -18,37 +24,49 @@ class CustomAppTest < ActiveSupport::TestCase
   end
 
   test "requires path" do
-    app = CustomApp.new(agent: @agent, account: @account, name: "my-app")
+    app = CustomApp.new(agent: @agent, account: @account, slug: "my-app")
     assert_not app.valid?
     assert_includes app.errors[:path], "can't be blank"
   end
 
-  test "name format validation" do
-    invalid_names = [ "MyApp", "my app", "1app", "-app", "App!", "MY_APP" ]
-    invalid_names.each do |name|
-      app = CustomApp.new(agent: @agent, account: @account, name: name, path: "apps/test")
-      assert_not app.valid?, "Expected '#{name}' to be invalid"
+  test "slug format validation" do
+    invalid_slugs = [ "MyApp", "my app", "1app", "-app", "App!", "MY_APP" ]
+    invalid_slugs.each do |slug|
+      app = CustomApp.new(agent: @agent, account: @account, slug: slug, path: "apps/test")
+      assert_not app.valid?, "Expected '#{slug}' to be invalid"
     end
   end
 
-  test "valid name formats" do
-    valid_names = [ "my-app", "app1", "a", "my-cool-app-2" ]
-    valid_names.each do |name|
-      app = CustomApp.new(agent: @agent, account: @account, name: name, path: "apps/test")
-      assert app.valid?, "Expected '#{name}' to be valid: #{app.errors.full_messages}"
+  test "valid slug formats" do
+    valid_slugs = [ "my-app", "app1", "a", "my-cool-app-2" ]
+    valid_slugs.each do |slug|
+      app = CustomApp.new(agent: @agent, account: @account, slug: slug, path: "apps/test")
+      assert app.valid?, "Expected '#{slug}' to be valid: #{app.errors.full_messages}"
     end
   end
 
-  test "name uniqueness scoped to account" do
-    CustomApp.create!(agent: @agent, account: @account, name: "unique-app", path: "apps/test")
-    duplicate = CustomApp.new(agent: @agent, account: @account, name: "unique-app", path: "apps/other")
+  test "slug uniqueness scoped to account" do
+    CustomApp.create!(agent: @agent, account: @account, slug: "unique-app", path: "apps/test")
+    duplicate = CustomApp.new(agent: @agent, account: @account, slug: "unique-app", path: "apps/other")
     assert_not duplicate.valid?
   end
 
-  test "same name allowed in different accounts" do
-    CustomApp.create!(agent: @agent, account: @account, name: "shared-name", path: "apps/test")
-    other_app = CustomApp.new(agent: agents(:two), account: accounts(:two), name: "shared-name", path: "apps/test")
+  test "same slug allowed in different accounts" do
+    CustomApp.create!(agent: @agent, account: @account, slug: "shared-slug", path: "apps/test")
+    other_app = CustomApp.new(agent: agents(:two), account: accounts(:two), slug: "shared-slug", path: "apps/test")
     assert other_app.valid?
+  end
+
+  test "auto-sets name from slug on create" do
+    app = CustomApp.new(agent: @agent, account: @account, slug: "my-cool-app", path: "apps/test")
+    app.valid?
+    assert_equal "My Cool App", app.name
+  end
+
+  test "does not override explicit name" do
+    app = CustomApp.new(agent: @agent, account: @account, slug: "my-app", name: "Custom Name", path: "apps/test")
+    app.valid?
+    assert_equal "Custom Name", app.name
   end
 
   test "icon_display returns :emoji when emoji set" do
@@ -92,7 +110,7 @@ class CustomAppTest < ActiveSupport::TestCase
   end
 
   test "default account from agent" do
-    app = CustomApp.new(agent: @agent, name: "test-default", path: "apps/test")
+    app = CustomApp.new(agent: @agent, slug: "test-default", path: "apps/test")
     app.valid?
     assert_equal @account, app.account
   end

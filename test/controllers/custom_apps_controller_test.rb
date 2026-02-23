@@ -10,19 +10,19 @@ class CustomAppsControllerTest < ActionDispatch::IntegrationTest
   test "index shows published apps" do
     get custom_apps_path
     assert_response :success
-    assert_select ".app-card-name", text: "slideshow"
+    assert_select ".app-card-name", text: "Slideshow"
   end
 
   test "index does not show draft apps" do
     get custom_apps_path
     assert_response :success
-    assert_select ".app-card-name", text: "draft-app", count: 0
+    assert_select ".app-card-name", text: "Draft App", count: 0
   end
 
   test "index does not show apps from other accounts" do
     get custom_apps_path
     assert_response :success
-    assert_select ".app-card-name", text: "other-app", count: 0
+    assert_select ".app-card-name", text: "Other App", count: 0
   end
 
   test "show renders app" do

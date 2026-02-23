@@ -8,23 +8,23 @@ class Agent::Tools::UnregisterApp < Agent::Tools::Base
         parameters: {
           type: "object",
           properties: {
-            name: { type: "string", description: "The app name to remove" }
+            slug: { type: "string", description: "The app slug to remove" }
           },
-          required: [ "name" ]
+          required: [ "slug" ]
         }
       }
     }
   end
 
   def call
-    name = arguments["name"]
-    return "Error: name is required" if name.blank?
+    slug = arguments["slug"]
+    return "Error: slug is required" if slug.blank?
 
-    custom_app = agent.custom_apps.find_by(name: name)
-    return "Error: no app named '#{name}'" unless custom_app
+    custom_app = agent.custom_apps.find_by(slug: slug)
+    return "Error: no app with slug '#{slug}'" unless custom_app
 
     FileUtils.rm_f(custom_app.database_path)
     custom_app.destroy!
-    "Unregistered app '#{name}'."
+    "Unregistered app '#{slug}'."
   end
 end

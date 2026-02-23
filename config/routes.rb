@@ -13,7 +13,7 @@ Rails.application.routes.draw do
     resources :models, only: %i[index create update destroy], module: :agents
     resource :settings, only: %i[show update], module: :agents
     resources :plugins, only: %i[index create destroy], module: :agents
-    resources :app_accesses, only: %i[index create destroy], module: :agents
+    resources :custom_apps, only: :index, module: :agents
     resources :key_chains, only: %i[index new create edit update destroy], module: :agents
     resources :memories, only: %i[index edit update destroy], module: :agents
     resource :workspace, only: %i[show update create], module: :agents

@@ -73,7 +73,7 @@
       <span>Plugins</span>
     <% end %>
 
-    <%= link_to agent_app_accesses_path(@agent), class: "agent-profile-tab #{'agent-profile-tab-active' if active == 'apps'}", data: { turbo_frame: "_top" } do %>
+    <%= link_to agent_custom_apps_path(@agent), class: "agent-profile-tab #{'agent-profile-tab-active' if active == 'apps'}", data: { turbo_frame: "_top" } do %>
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><rect x="2.25" y="3.75" width="13.5" height="10.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M2.25 6.75h13.5" stroke="currentColor" stroke-width="1.5"/><circle cx="4.5" cy="5.25" r="0.5" fill="currentColor"/><circle cx="6" cy="5.25" r="0.5" fill="currentColor"/><circle cx="7.5" cy="5.25" r="0.5" fill="currentColor"/></svg>
       <span>Apps</span>
     <% end %>

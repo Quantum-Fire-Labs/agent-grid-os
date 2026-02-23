@@ -1,7 +1,8 @@
 slideshow:
   agent: one
   account: one
-  name: slideshow
+  slug: slideshow
+  name: Slideshow
   description: A presentation builder
   path: apps/slideshow
   entrypoint: index.html
@@ -10,7 +11,8 @@ slideshow:
 draft_app:
   agent: one
   account: one
-  name: draft-app
+  slug: draft-app
+  name: Draft App
   description: A draft app
   path: apps/draft
   entrypoint: index.html
@@ -19,7 +21,8 @@ draft_app:
 other_account_app:
   agent: two
   account: two
-  name: other-app
+  slug: other-app
+  name: Other App
   description: App in another account
   path: apps/other
   entrypoint: index.html

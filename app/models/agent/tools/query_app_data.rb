@@ -8,7 +8,7 @@ class Agent::Tools::QueryAppData < Agent::Tools::Base
         parameters: {
           type: "object",
           properties: {
-            app: { type: "string", description: "Name of the custom app" },
+            app: { type: "string", description: "Slug of the custom app" },
             table: { type: "string", description: "Table name to query" },
             where: { type: "object", description: "Optional filter conditions as key-value pairs" },
             limit: { type: "integer", description: "Maximum rows to return (default 100, max 1000)" },
@@ -38,7 +38,7 @@ class Agent::Tools::QueryAppData < Agent::Tools::Base
 
   private
     def find_app!
-      agent.accessible_apps.find_by!(name: arguments["app"])
+      agent.accessible_apps.find_by!(slug: arguments["app"])
     rescue ActiveRecord::RecordNotFound
       "Error: no app named '#{arguments["app"]}' found for this agent."
     end

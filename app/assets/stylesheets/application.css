@@ -683,6 +683,21 @@ input::placeholder {
   background-color: var(--error-bg);
 }
 
+.status-published {
+  color: var(--success);
+  background-color: var(--success-bg);
+}
+
+.status-draft {
+  color: var(--text-tertiary);
+  background-color: var(--bg-tertiary);
+}
+
+.status-disabled {
+  color: var(--error);
+  background-color: var(--error-bg);
+}
+
 /* ───── Agent detail ───── */
 .agent-detail {
   background-color: var(--bg-secondary);

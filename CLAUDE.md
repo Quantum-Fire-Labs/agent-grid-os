@@ -41,7 +41,7 @@ Each agent gets: identity, conversations, memory (semantic recall), tools (27 bu
 - `Memory` / `MemoryCompaction` — agent long-term memory with semantic recall
 - `Plugin` / `AgentPlugin` / `PluginConfig` — plugin system (see below)
 - `CustomTool` / `Skill` — user-defined tools and skills
-- `CustomApp` / `CustomApp::Table` / `CustomApp::Row` — custom applications
+- `CustomApp` — custom applications with per-app SQLite storage (see below)
 - `KeyChain` — encrypted credential storage
 
 ## Plugin System
@@ -56,6 +56,19 @@ Bundled plugins live in `lib/plugins/<name>/plugin.yaml` (+ optional `.rb` entry
   - `sandbox` — runs command in agent's Docker workspace (e.g. `claude_code`)
   - `platform` — loads `.rb` entrypoint in Rails process, constantizes plugin name to find class (e.g. `web_search` → `WebSearch`)
 - Network permissions: `permissions.network` can be `false`, `true`, or array of domains
+
+## Custom Apps
+
+Agents can create web apps served from their Docker workspace with persistent SQLite storage.
+
+- `CustomApp` belongs to an `Agent` and `Account`; has `name`, `path`, `entrypoint`, `status` (draft/published/disabled)
+- Two concerns: `Servable` (serves HTML/assets from agent workspace) and `Storable` (per-app SQLite database)
+- Each app gets its own SQLite file at `storage/agents/{agent_id}/app_data/{custom_app_id}.db`
+- 50MB size limit per database, WAL mode, 5s busy timeout
+- Table/column names validated against `/\A[a-zA-Z_][a-zA-Z0-9_]{0,63}\z/`, column types restricted to TEXT/INTEGER/REAL/BLOB/NUMERIC
+- REST API: `CustomApps::TablesController` (create/list/drop tables) and `CustomApps::RowsController` (CRUD rows)
+- Client SDK (`public/agentgridos_app_sdk.js`) exposes `AgentGridOS.db` (table ops) and `AgentGridOS.kv` (key-value store built on a `_kv_store` table)
+- Access enforced via `AgentAccessible` — user must have access to the owning agent
 
 ## Conventions
 

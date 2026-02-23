@@ -1,0 +1,35 @@
+<div class="agent-profile" data-status="<%= @agent.status %>">
+  <%= render "agents/header", active_tab: "apps" %>
+
+  <div class="agent-profile-body">
+    <% if @custom_apps.any? %>
+      <div class="agent-detail-section">
+        <h3 class="section-label">Apps</h3>
+        <div class="skills-list">
+          <% @custom_apps.each do |app| %>
+            <div class="skill-card">
+              <div class="skill-card-header">
+                <h3 class="skill-name"><%= app.name %></h3>
+                <span class="agent-status status-<%= app.status %>"><%= app.status %></span>
+              </div>
+              <% if app.description.present? %>
+                <p class="skill-description"><%= truncate(app.description, length: 120) %></p>
+              <% end %>
+              <% if app.published? %>
+                <div class="skill-card-actions">
+                  <%= link_to "View", custom_app_path(app), class: "btn btn-ghost btn-sm" %>
+                  <%= link_to "Settings", custom_app_settings_path(app), class: "btn btn-ghost btn-sm" %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <h2>No apps yet</h2>
+        <p>This agent hasn't created any apps yet.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

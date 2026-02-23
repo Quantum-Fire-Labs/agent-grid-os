@@ -9,13 +9,15 @@ class CustomApp < ApplicationRecord
   has_many :users, through: :custom_app_users
 
   before_validation :set_account_from_agent, on: :create
+  before_validation :set_name_from_slug, on: :create
   has_one_attached :icon_image
 
   enum :status, %w[ draft published disabled ].index_by(&:itself)
 
-  validates :name, presence: true,
+  validates :slug, presence: true,
     format: { with: /\A[a-z][a-z0-9\-]{0,49}\z/, message: "must start with a letter and contain only lowercase letters, numbers, and hyphens" },
     uniqueness: { scope: :account_id }
+  validates :name, presence: true
   validates :path, presence: true
 
   def icon_display
@@ -32,5 +34,9 @@ class CustomApp < ApplicationRecord
 
     def set_account_from_agent
       self.account ||= agent&.account
+    end
+
+    def set_name_from_slug
+      self.name = slug.titleize if name.blank? && slug.present?
     end
 end
