@@ -10,8 +10,7 @@ class Agent::Tools::RegisterAppTest < ActiveSupport::TestCase
       agent: @agent,
       arguments: {
         "slug" => "test-app",
-        "description" => "A test app",
-        "path" => "apps/test"
+        "description" => "A test app"
       }
     ).call
 
@@ -22,23 +21,22 @@ class Agent::Tools::RegisterAppTest < ActiveSupport::TestCase
   test "updates existing app" do
     Agent::Tools::RegisterApp.new(
       agent: @agent,
-      arguments: { "slug" => "update-me", "description" => "V1", "path" => "apps/v1" }
+      arguments: { "slug" => "update-me", "description" => "V1" }
     ).call
 
     Agent::Tools::RegisterApp.new(
       agent: @agent,
-      arguments: { "slug" => "update-me", "description" => "V2", "path" => "apps/v2" }
+      arguments: { "slug" => "update-me", "description" => "V2" }
     ).call
 
     app = @agent.custom_apps.find_by(slug: "update-me")
     assert_equal "V2", app.description
-    assert_equal "apps/v2", app.path
   end
 
   test "requires slug" do
     result = Agent::Tools::RegisterApp.new(
       agent: @agent,
-      arguments: { "description" => "Test", "path" => "apps/test" }
+      arguments: { "description" => "Test" }
     ).call
 
     assert_match /Error/, result
@@ -47,16 +45,7 @@ class Agent::Tools::RegisterAppTest < ActiveSupport::TestCase
   test "requires description" do
     result = Agent::Tools::RegisterApp.new(
       agent: @agent,
-      arguments: { "slug" => "test", "path" => "apps/test" }
-    ).call
-
-    assert_match /Error/, result
-  end
-
-  test "requires path" do
-    result = Agent::Tools::RegisterApp.new(
-      agent: @agent,
-      arguments: { "slug" => "test", "description" => "Test" }
+      arguments: { "slug" => "test" }
     ).call
 
     assert_match /Error/, result
@@ -65,7 +54,7 @@ class Agent::Tools::RegisterAppTest < ActiveSupport::TestCase
   test "sets default entrypoint" do
     Agent::Tools::RegisterApp.new(
       agent: @agent,
-      arguments: { "slug" => "default-entry", "description" => "Test", "path" => "apps/test" }
+      arguments: { "slug" => "default-entry", "description" => "Test" }
     ).call
 
     app = @agent.custom_apps.find_by(slug: "default-entry")
@@ -75,7 +64,7 @@ class Agent::Tools::RegisterAppTest < ActiveSupport::TestCase
   test "custom entrypoint" do
     Agent::Tools::RegisterApp.new(
       agent: @agent,
-      arguments: { "slug" => "custom-entry", "description" => "Test", "path" => "apps/test", "entrypoint" => "app.html" }
+      arguments: { "slug" => "custom-entry", "description" => "Test", "entrypoint" => "app.html" }
     ).call
 
     app = @agent.custom_apps.find_by(slug: "custom-entry")
@@ -85,7 +74,7 @@ class Agent::Tools::RegisterAppTest < ActiveSupport::TestCase
   test "sets icon emoji" do
     Agent::Tools::RegisterApp.new(
       agent: @agent,
-      arguments: { "slug" => "emoji-app", "description" => "Test", "path" => "apps/test", "icon_emoji" => "🎯" }
+      arguments: { "slug" => "emoji-app", "description" => "Test", "icon_emoji" => "🎯" }
     ).call
 
     app = @agent.custom_apps.find_by(slug: "emoji-app")
@@ -95,7 +84,7 @@ class Agent::Tools::RegisterAppTest < ActiveSupport::TestCase
   test "defaults name from slug" do
     Agent::Tools::RegisterApp.new(
       agent: @agent,
-      arguments: { "slug" => "my-cool-app", "description" => "Test", "path" => "apps/test" }
+      arguments: { "slug" => "my-cool-app", "description" => "Test" }
     ).call
 
     app = @agent.custom_apps.find_by(slug: "my-cool-app")
@@ -105,10 +94,32 @@ class Agent::Tools::RegisterAppTest < ActiveSupport::TestCase
   test "accepts explicit name" do
     Agent::Tools::RegisterApp.new(
       agent: @agent,
-      arguments: { "slug" => "named-app", "name" => "Custom Name", "description" => "Test", "path" => "apps/test" }
+      arguments: { "slug" => "named-app", "name" => "Custom Name", "description" => "Test" }
     ).call
 
     app = @agent.custom_apps.find_by(slug: "named-app")
     assert_equal "Custom Name", app.name
+  end
+
+  test "auto-sets path from slug" do
+    Agent::Tools::RegisterApp.new(
+      agent: @agent,
+      arguments: { "slug" => "auto-path", "description" => "Test" }
+    ).call
+
+    app = @agent.custom_apps.find_by(slug: "auto-path")
+    assert_equal "apps/auto-path", app.path
+  end
+
+  test "creates files directory on registration" do
+    Agent::Tools::RegisterApp.new(
+      agent: @agent,
+      arguments: { "slug" => "files-dir-test", "description" => "Test" }
+    ).call
+
+    app = @agent.custom_apps.find_by(slug: "files-dir-test")
+    assert app.files_path.exist?
+  ensure
+    FileUtils.rm_rf(app.storage_path) if app
   end
 end

@@ -1,12 +1,16 @@
 module CustomApp::Servable
   extend ActiveSupport::Concern
 
-  def workspace_path
-    Agent::Workspace.new(agent).path.join(path)
+  def storage_path
+    Rails.root.join("storage", "apps", id.to_s)
+  end
+
+  def files_path
+    storage_path.join("files")
   end
 
   def entrypoint_path
-    workspace_path.join(entrypoint)
+    files_path.join(entrypoint)
   end
 
   def entrypoint_content
@@ -21,8 +25,8 @@ module CustomApp::Servable
     clean_path = Pathname.new(relative_path).cleanpath
     return nil if clean_path.to_s.start_with?("/")
 
-    full_path = workspace_path.join(clean_path)
-    return nil unless full_path.to_s.start_with?(workspace_path.to_s)
+    full_path = files_path.join(clean_path)
+    return nil unless full_path.to_s.start_with?(files_path.to_s)
     return nil unless full_path.exist?
     return nil unless full_path.file?
 

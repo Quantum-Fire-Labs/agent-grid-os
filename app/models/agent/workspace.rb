@@ -215,6 +215,11 @@ class Agent::Workspace
         end
       end
 
+      agent.accessible_apps.each do |app|
+        FileUtils.mkdir_p(app.files_path)
+        cmd += [ "-v", "#{host_path_for(app.files_path)}:/workspace/apps/#{app.slug}" ]
+      end
+
       cmd += [ IMAGE, "sleep", "infinity" ]
       cmd
     end

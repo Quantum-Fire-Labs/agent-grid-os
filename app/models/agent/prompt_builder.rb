@@ -108,12 +108,13 @@ class Agent::PromptBuilder
 
     def apps_instructions
       <<~INSTRUCTIONS.strip
-        You can build web apps and serve them to users through AgentGridOS. Build your app as static HTML/CSS/JS files in your workspace, then call `register_app` to make it available.
+        You can build web apps and serve them to users through AgentGridOS. Call `register_app` first to create the app — this makes `apps/{slug}/` available in your workspace. Then write your HTML/CSS/JS files there.
 
         ### How it works
-        - Create a directory in your workspace (e.g. `apps/my-app/`) with an `index.html` entrypoint
+        - Call `register_app` with a slug and description to create the app
+        - This mounts a directory at `apps/{slug}/` in your workspace where you write your files
+        - Create an `index.html` entrypoint in that directory
         - Additional JS, CSS, and image files in that directory are served via `/apps/:id/assets/...`
-        - Call `register_app` with the directory path to publish it
         - The app renders inside AgentGridOS's layout with the nav bar above it
         - **Important:** Do NOT include `<!DOCTYPE>`, `<html>`, `<head>`, or `<body>` tags — your HTML is injected into the existing page. Just write the content directly (styles, scripts, and markup)
         - Wrap your app in a container div (e.g. `<div id="app">`) and scope all CSS under it (e.g. `#app h1 { ... }`) to avoid conflicts with AgentGridOS's styles

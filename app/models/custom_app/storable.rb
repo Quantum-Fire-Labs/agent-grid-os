@@ -6,9 +6,7 @@ module CustomApp::Storable
   MAX_DATABASE_SIZE = 50.megabytes
 
   def database_path
-    dir = Rails.root.join("storage", "agents", agent_id.to_s, "app_data")
-    dir = dir.join("p#{ENV["TEST_ENV_NUMBER"]}") if ENV.key?("TEST_ENV_NUMBER")
-    dir.join("#{id}.db")
+    storage_path.join("data.db")
   end
 
   def with_database

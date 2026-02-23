@@ -53,4 +53,20 @@ class CustomAppAgentAccessTest < ActiveSupport::TestCase
       app.destroy
     end
   end
+
+  test "skips workspace recreate when workspace not enabled" do
+    agent = agents(:three)
+    assert_not agent.workspace_enabled?
+
+    # Should not raise — callback is a no-op when workspace disabled
+    CustomAppAgentAccess.create!(agent: agent, custom_app: custom_apps(:draft_app))
+  end
+
+  test "skips workspace recreate on destroy when workspace not enabled" do
+    access = custom_app_agent_accesses(:nova_slideshow)
+    assert_not access.agent.workspace_enabled?
+
+    # Should not raise — callback is a no-op when workspace disabled
+    access.destroy!
+  end
 end

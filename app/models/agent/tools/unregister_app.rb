@@ -23,8 +23,7 @@ class Agent::Tools::UnregisterApp < Agent::Tools::Base
     custom_app = agent.custom_apps.find_by(slug: slug)
     return "Error: no app with slug '#{slug}'" unless custom_app
 
-    FileUtils.rm_f(custom_app.database_path)
     custom_app.destroy!
-    "Unregistered app '#{slug}'."
+    "Unregistered app '#{slug}'. Your workspace is restarting to remove the mount."
   end
 end
