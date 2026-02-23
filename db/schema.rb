@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_23_034035) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_23_110000) do
   create_table "accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -95,6 +95,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_034035) do
     t.index ["account_id"], name: "index_agents_on_account_id"
   end
 
+  create_table "chats", force: :cascade do |t|
+    t.integer "account_id", null: false
+    t.datetime "created_at", null: false
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_chats_on_account_id"
+  end
+
   create_table "configs", force: :cascade do |t|
     t.integer "configurable_id", null: false
     t.string "configurable_type", null: false
@@ -107,7 +115,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_034035) do
   end
 
   create_table "conversations", force: :cascade do |t|
-    t.integer "agent_id", null: false
+    t.integer "agent_id"
     t.datetime "created_at", null: false
     t.string "kind", default: "direct", null: false
     t.datetime "updated_at", null: false
@@ -196,26 +204,37 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_034035) do
   end
 
   create_table "messages", force: :cascade do |t|
+    t.integer "chat_id"
     t.datetime "compacted_at"
     t.text "content"
     t.integer "conversation_id", null: false
     t.datetime "created_at", null: false
     t.string "role", null: false
+    t.integer "sender_id"
+    t.string "sender_type"
     t.string "tool_call_id"
     t.text "tool_calls"
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.index ["chat_id"], name: "index_messages_on_chat_id"
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["sender_type", "sender_id"], name: "index_messages_on_sender_type_and_sender_id"
     t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
   create_table "participants", force: :cascade do |t|
+    t.integer "chat_id"
     t.integer "conversation_id", null: false
     t.datetime "created_at", null: false
+    t.integer "participatable_id"
+    t.string "participatable_type"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["chat_id", "participatable_type", "participatable_id"], name: "idx_participants_chat_and_participatable_unique", unique: true
+    t.index ["chat_id"], name: "index_participants_on_chat_id"
     t.index ["conversation_id", "user_id"], name: "index_participants_on_conversation_id_and_user_id", unique: true
     t.index ["conversation_id"], name: "index_participants_on_conversation_id"
+    t.index ["participatable_type", "participatable_id"], name: "idx_on_participatable_type_participatable_id_460ba42147"
     t.index ["user_id"], name: "index_participants_on_user_id"
   end
 
@@ -306,6 +325,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_034035) do
   add_foreign_key "agent_users", "agents"
   add_foreign_key "agent_users", "users"
   add_foreign_key "agents", "accounts"
+  add_foreign_key "chats", "accounts"
   add_foreign_key "conversations", "agents"
   add_foreign_key "custom_app_agent_accesses", "agents"
   add_foreign_key "custom_app_agent_accesses", "custom_apps"
