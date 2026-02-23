@@ -117,7 +117,7 @@ class Conversation < ApplicationRecord
             self,
             target: "typing-indicator",
             partial: "agents/conversations/messages/streaming",
-            locals: { agent: agent, stream_id: stream_id, content: helpers.simple_format(helpers.sanitize(accumulated)) }
+            locals: { agent: agent, stream_id: stream_id, content: MarkdownHelper.to_html(accumulated).html_safe }
           )
           streaming = true
           next
@@ -131,7 +131,7 @@ class Conversation < ApplicationRecord
         Turbo::StreamsChannel.broadcast_update_to(
           self,
           target: "streaming-content-#{stream_id}",
-          html: helpers.simple_format(helpers.sanitize(accumulated))
+          html: MarkdownHelper.to_html(accumulated)
         )
       rescue => e
         Rails.logger.warn("Streaming token failed: #{e.message}")
