@@ -1,0 +1,9 @@
+one:
+  agent: one
+  content: The user prefers dark mode
+  state: active
+
+two:
+  agent: one
+  content: The user works on Rails projects
+  state: active

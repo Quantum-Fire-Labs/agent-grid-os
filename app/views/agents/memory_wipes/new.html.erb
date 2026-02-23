@@ -1,0 +1,36 @@
+<div class="dashboard">
+  <div class="dashboard-header">
+    <div class="breadcrumb">
+      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span> <%= link_to @agent.name, agent_path(@agent) %> <span class="breadcrumb-sep">/</span> <span>Wipe Memory</span>
+    </div>
+  </div>
+
+  <div class="agent-detail">
+    <%= form_with url: agent_memory_wipe_path(@agent), method: :post, data: { turbo_frame: "_top", controller: "memory-wipe" } do |form| %>
+      <div class="form-group">
+        <label>What to wipe</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <%= radio_button_tag :scope, "everything", true, data: { action: "memory-wipe#toggle", memory_wipe_target: "scopeRadio" } %> Everything
+          </label>
+          <label class="radio-label">
+            <%= radio_button_tag :scope, "custom", false, data: { action: "memory-wipe#toggle", memory_wipe_target: "scopeRadio" } %> Past...
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group" data-memory-wipe-target="customFields" style="display: none;">
+        <label>Wipe memories from the past</label>
+        <div class="inline-field-group">
+          <%= number_field_tag :amount, 24, min: 1, class: "input input-sm", style: "width: 6rem;" %>
+          <%= select_tag :unit, options_for_select([["minutes", "minutes"], ["hours", "hours"], ["days", "days"], ["weeks", "weeks"]], "hours"), class: "input input-sm" %>
+        </div>
+      </div>
+
+      <div class="form-actions-inline">
+        <%= form.submit "Wipe Memory", class: "btn btn-primary btn-sm", data: { turbo_confirm: "This will permanently delete #{@agent.name}'s memories and chat messages for the selected period. This cannot be undone." } %>
+        <%= link_to "Cancel", agent_path(@agent), class: "btn btn-ghost btn-sm" %>
+      </div>
+    <% end %>
+  </div>
+</div>

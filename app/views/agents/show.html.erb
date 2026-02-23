@@ -46,7 +46,12 @@
             <span class="agent-profile-meta-val"><%= @agent.created_at.strftime("%b %-d, %Y") %></span>
           </span>
         </div>
-        <%= button_to "Delete Agent", agent_path(@agent), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Delete #{@agent.name}? This cannot be undone." } %>
+        <div class="agent-profile-actions-row">
+          <%= link_to "Clone", new_agent_clone_path(@agent), class: "btn btn-ghost btn-sm" %>
+          <%= link_to "Wipe Memory", new_agent_memory_wipe_path(@agent), class: "btn btn-ghost btn-sm text-danger" %>
+          <%= button_to "Factory Reset", agent_factory_reset_path(@agent), class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Factory reset #{@agent.name}? This will wipe all memory, chats, custom apps, and workspace data. This cannot be undone." } %>
+          <%= button_to "Delete Agent", agent_path(@agent), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Delete #{@agent.name}? This cannot be undone." } %>
+        </div>
       </div>
     <% end %>
   </div>

@@ -1,4 +1,7 @@
 class Agent < ApplicationRecord
+  include Resettable
+  include Cloneable
+
   belongs_to :account
   has_many :agent_users, dependent: :destroy
   has_many :users, through: :agent_users

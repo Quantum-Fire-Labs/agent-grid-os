@@ -10,6 +10,9 @@ Rails.application.routes.draw do
     resources :memories, only: %i[index edit update destroy], module: :agents
     resource :workspace, only: %i[show update create], module: :agents
     resource :terminal, only: :show, module: :agents
+    resource :memory_wipe, only: %i[new create], module: :agents
+    resource :factory_reset, only: :create, module: :agents
+    resource :clone, only: %i[new create], module: :agents
   end
   resources :skills
   resources :custom_apps, only: [ :index, :show ], path: "apps" do
