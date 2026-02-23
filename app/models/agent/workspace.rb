@@ -81,11 +81,11 @@ class Agent::Workspace
     { stdout: "", stderr: "Error: command timed out after #{timeout}s", exit_code: 124 }
   end
 
-  def exec_later(command, conversation:, label:, timeout: 600)
-    Agent::WorkspaceExecJob.perform_later(agent, conversation, command, label: label, timeout: timeout)
+  def exec_later(command, chat:, label:, timeout: 600)
+    Agent::WorkspaceExecJob.perform_later(agent, chat, command, label: label, timeout: timeout)
   end
 
-  def deliver_exec_result(command, conversation:, label:, timeout: 600)
+  def deliver_exec_result(command, chat:, label:, timeout: 600)
     result = exec(command, timeout: timeout)
 
     output = +""
@@ -96,19 +96,23 @@ class Agent::Workspace
 
     status = result[:exit_code] == 0 ? "completed" : "failed (exit code #{result[:exit_code]})"
 
-    msg = conversation.messages.create!(
+    msg = chat.messages.create!(
       role: "system",
       content: "[#{label} #{status}]\n\n#{output}\n\nReview the output and let the user know what happened."
     )
 
     Turbo::StreamsChannel.broadcast_append_to(
-      conversation,
+      chat,
       target: "chat-messages",
-      partial: "agents/conversations/messages/message",
+      partial: "chats/messages/message",
       locals: { message: msg, agent: agent }
     )
 
-    conversation.enqueue_agent_reply
+    if chat.respond_to?(:enqueue_agent_reply)
+      chat.enqueue_agent_reply(agent: agent)
+    else
+      chat.enqueue_agent_reply
+    end
   end
 
   def path

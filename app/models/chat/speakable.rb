@@ -1,4 +1,4 @@
-module Conversation::Speakable
+module Chat::Speakable
   extend ActiveSupport::Concern
 
   class TtsStream
@@ -6,8 +6,8 @@ module Conversation::Speakable
 
     attr_reader :chunks
 
-    def initialize(conversation, audio_service)
-      @conversation = conversation
+    def initialize(chat, audio_service)
+      @chat = chat
       @audio_service = audio_service
       @queue = Queue.new
       @chunks = []
@@ -70,7 +70,7 @@ module Conversation::Speakable
       data_uri = "data:audio/mpeg;base64,#{base64}"
 
       Turbo::StreamsChannel.broadcast_append_to(
-        @conversation,
+        @chat,
         target: "audio-queue",
         html: %(<div data-audio-queue-target="chunk" data-src="#{data_uri}"></div>)
       )
@@ -109,7 +109,7 @@ module Conversation::Speakable
       # Replace the synthesize-only player with the persistent audio player
       src = Rails.application.routes.url_helpers.rails_blob_path(message.audio, only_path: true)
       Turbo::StreamsChannel.broadcast_update_to(
-        @conversation,
+        @chat,
         target: ActionView::RecordIdentifier.dom_id(message, :audio),
         html: <<~HTML
           <div class="audio-player" data-controller="audio-player" data-audio-player-autoplay-value="false">

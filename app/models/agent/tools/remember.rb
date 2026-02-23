@@ -4,7 +4,7 @@ class Agent::Tools::Remember < Agent::Tools::Base
       type: "function",
       function: {
         name: "remember",
-        description: "Save something to long-term memory. Use this to remember important facts, preferences, or context about the user or conversation.",
+        description: "Save something to long-term memory. Use this to remember important facts, preferences, or context about the user or chat.",
         parameters: {
           type: "object",
           properties: {

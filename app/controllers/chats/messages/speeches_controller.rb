@@ -1,10 +1,10 @@
-class Agents::Conversations::Messages::SpeechesController < ApplicationController
-  include ConversationAccessible
+class Chats::Messages::SpeechesController < ApplicationController
+  include ChatAccessible
 
-  before_action :set_agent
-  before_action :set_conversation
-  before_action :require_participant
+  before_action :set_chat
+  before_action :require_chat_participant
   before_action :set_message
+  before_action :set_agent
 
   def create
     if @message.audio.attached?
@@ -24,10 +24,8 @@ class Agents::Conversations::Messages::SpeechesController < ApplicationControlle
   end
 
   private
-
     def synthesize_and_attach
-      audio_service = Agent::Audio.new(@agent)
-      mp3_data = audio_service.speak(@message.content)
+      mp3_data = Agent::Audio.new(@agent).speak(@message.content)
 
       @message.audio.attach(
         io: StringIO.new(mp3_data),
@@ -38,16 +36,17 @@ class Agents::Conversations::Messages::SpeechesController < ApplicationControlle
       render json: { url: rails_blob_path(@message.audio, only_path: true) }
     end
 
-    def set_agent
-      @agent = Current.account.agents.find(params[:agent_id])
+    def set_chat
+      @chat = Chat.find(params[:chat_id])
     end
-
-    def set_conversation
-      @conversation = @agent.conversations.find(params[:conversation_id])
-    end
-
 
     def set_message
-      @message = @conversation.messages.find(params[:message_id])
+      @message = @chat.messages.find(params[:message_id])
+    end
+
+    def set_agent
+      @agent = @message.sender if @message.sender.is_a?(Agent)
+      @agent ||= @chat.agent
+      head :unprocessable_entity unless @agent
     end
 end

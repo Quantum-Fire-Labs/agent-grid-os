@@ -1,8 +1,8 @@
-<% if @conversation %>
-  <%= turbo_stream_from @conversation %>
+<% if @chat %>
+  <%= turbo_stream_from @chat %>
 <% end %>
 
-<div class="chat-hub" data-controller="chat-hub" data-chat-hub-has-conversation-value="<%= @conversation.present? %>">
+<div class="chat-hub" data-controller="chat-hub" data-chat-hub-has-chat-value="<%= @chat.present? %>">
   <%# ── Sidebar ── %>
   <div class="chat-hub-sidebar" data-chat-hub-target="sidebar">
     <div class="chat-hub-sidebar-header">
@@ -13,44 +13,44 @@
     </div>
 
     <div class="chat-hub-search">
-      <input type="search" placeholder="Search conversations..." class="chat-hub-search-input" data-chat-hub-target="search" data-action="input->chat-hub#filter" autocomplete="off" />
+      <input type="search" placeholder="Search chats..." class="chat-hub-search-input" data-chat-hub-target="search" data-action="input->chat-hub#filter" autocomplete="off" />
     </div>
 
     <div class="chat-hub-conversations" data-chat-hub-target="list">
-      <% if @conversations.any? %>
-        <% @conversations.each do |conversation| %>
-          <%= link_to chat_path(conversation),
-                class: "chat-hub-convo #{"chat-hub-convo-active" if @conversation == conversation}",
+      <% if @chats.any? %>
+        <% @chats.each do |chat| %>
+          <%= link_to chat_path(chat),
+                class: "chat-hub-convo #{"chat-hub-convo-active" if @chat == chat}",
                 data: {
-                  chat_hub_target: "conversation",
-                  name: conversation.display_name.downcase,
-                  action: "click->chat-hub#selectConversation"
+                  chat_hub_target: "chat",
+                  name: chat.display_name.downcase,
+                  action: "click->chat-hub#selectChat"
                 } do %>
             <div class="chat-hub-convo-avatar">
               <div class="chat-agent-indicator">
                 <span class="chat-agent-dot"></span>
               </div>
             </div>
-            <% last = conversation.last_message %>
+            <% last = chat.last_message %>
             <div class="chat-hub-convo-body">
               <div class="chat-hub-convo-top">
-                <span class="chat-hub-convo-name"><%= conversation.display_name %><% if conversation.kind_direct? && conversation.agent.title.present? %> <span class="chat-hub-convo-title">(<%= conversation.agent.title %>)</span><% end %></span>
+                <span class="chat-hub-convo-name"><%= chat.display_name(viewer: Current.user) %><% if chat.direct? && chat.agent&.title.present? %> <span class="chat-hub-convo-title">(<%= chat.agent.title %>)</span><% end %></span>
                 <% if last %>
-                  <span class="chat-hub-convo-time"><%= time_ago_in_words(last.created_at) %></span>
+                  <span class="chat-hub-convo-time"><%= time_ago_in_words(last.created_at.in_time_zone(Current.user&.time_zone)) %></span>
                 <% end %>
               </div>
               <% if last %>
                 <span class="chat-hub-convo-preview"><%= truncate(last.content || "", length: 60) %></span>
               <% end %>
             </div>
-            <% if conversation.kind_group? %>
+            <% if chat.group? %>
               <span class="chat-hub-convo-badge">group</span>
             <% end %>
           <% end %>
         <% end %>
       <% else %>
         <div class="chat-hub-empty-sidebar">
-          <p>No conversations yet</p>
+          <p>No chats yet</p>
         </div>
       <% end %>
     </div>
@@ -58,7 +58,7 @@
 
   <%# ── Chat Panel ── %>
   <div class="chat-hub-panel" data-chat-hub-target="panel">
-    <% if @conversation %>
+    <% if @chat %>
       <div class="chat-page">
         <div class="chat-header">
           <div class="chat-header-left">
@@ -67,34 +67,50 @@
                 <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
-            <%= link_to agent_path(@agent), class: "chat-header-identity", data: { turbo_frame: "_top" } do %>
-              <div class="chat-agent-indicator">
-                <span class="chat-agent-dot"></span>
-              </div>
-              <div>
-                <h1 class="chat-agent-name"><%= @conversation.display_name %><% if @conversation.kind_direct? && @agent.title.present? %> <span class="chat-agent-title">(<%= @agent.title %>)</span><% end %></h1>
+            <% if @agent.present? %>
+              <%= link_to agent_path(@agent), class: "chat-header-identity", data: { turbo_frame: "_top" } do %>
+                <div class="chat-agent-indicator">
+                  <span class="chat-agent-dot"></span>
+                </div>
+                <div>
+                  <h1 class="chat-agent-name"><%= @chat.display_name(viewer: Current.user) %><% if @chat.direct? && @agent.title.present? %> <span class="chat-agent-title">(<%= @agent.title %>)</span><% end %></h1>
+                </div>
+              <% end %>
+            <% else %>
+              <div class="chat-header-identity">
+                <div class="chat-agent-indicator">
+                  <span class="chat-agent-dot"></span>
+                </div>
+                <div>
+                  <h1 class="chat-agent-name"><%= @chat.display_name(viewer: Current.user) %></h1>
+                </div>
               </div>
             <% end %>
           </div>
           <div class="chat-header-right">
-            <span class="chat-status chat-status-<%= @agent.status %>"><%= @agent.status %></span>
+            <% if @agent.present? %>
+              <span class="chat-status chat-status-<%= @agent.status %>"><%= @agent.status %></span>
+            <% end %>
           </div>
         </div>
 
-        <% if @conversation.kind_group? %>
+        <% if @chat.group? %>
           <div class="chat-participants-bar">
             <div class="chat-participants-list">
-              <% @conversation.participants.includes(:user).each do |participant| %>
+              <% @chat.participants.includes(:participatable).each do |participant| %>
+                <% entity = participant.participatable %>
+                <% next unless entity %>
+                <% participant_name = entity.is_a?(User) ? entity.first_name : entity.name %>
                 <span class="participant-chip">
-                  <%= participant.user.first_name %>
-                  <%= button_to agent_conversation_participant_path(@agent, @conversation, participant), method: :delete, class: "participant-remove", title: "Remove #{participant.user.first_name}" do %>
+                  <%= participant_name %>
+                  <%= button_to chat_participant_path(@chat, participant), method: :delete, class: "participant-remove", title: "Remove #{participant_name}" do %>
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                   <% end %>
                 </span>
               <% end %>
             </div>
             <% if @available_users&.any? %>
-              <%= form_with url: agent_conversation_participants_path(@agent, @conversation), class: "participant-add-form" do |f| %>
+              <%= form_with url: chat_participants_path(@chat), class: "participant-add-form" do |f| %>
                 <%= f.select :user_id, @available_users.map { |u| [u.first_name, u.id] }, { prompt: "Add..." }, name: "participant[user_id]", class: "participant-add-select", onchange: "this.form.requestSubmit()" %>
               <% end %>
             <% end %>
@@ -103,7 +119,7 @@
 
         <div class="chat-thread" id="chat-thread"
              data-controller="chat-pagination"
-             data-chat-pagination-url-value="<%= agent_conversation_messages_path(@agent, @conversation) %>"
+             data-chat-pagination-url-value="<%= chat_messages_path(@chat) %>"
         >
           <% if @messages.empty? %>
             <div class="chat-welcome" id="chat-welcome">
@@ -117,7 +133,7 @@
                   <path d="M20 16H24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
               </div>
-              <p class="chat-welcome-text">Begin a conversation with <strong><%= @agent.name %></strong></p>
+              <p class="chat-welcome-text">Begin chatting<% if @agent.present? %> with <strong><%= @agent.name %></strong><% end %></p>
             </div>
           <% end %>
 
@@ -126,20 +142,26 @@
               <div id="chat-pagination-sentinel" data-chat-pagination-target="sentinel"></div>
             <% end %>
             <% @messages.each do |message| %>
-              <%= render "agents/conversations/messages/message", message: message, agent: @agent, tts_available: @audio_available %>
+              <%= render "chats/messages/message", message: message, agent: @agent, tts_available: @audio_available %>
             <% end %>
           </div>
         </div>
 
         <div id="audio-queue" data-controller="audio-queue" style="display:none"></div>
 
-        <div class="chat-composer<%= " chat-composer-disabled" unless @agent.running? %>">
-          <% unless @agent.running? %>
+        <% composer_enabled = @agent.nil? || @agent.running? %>
+        <div class="chat-composer<%= " chat-composer-disabled" unless composer_enabled %>">
+          <% unless composer_enabled %>
             <div class="chat-composer-notice"><%= @agent.name %> is <%= @agent.status %></div>
           <% end %>
-          <%= form_with url: agent_conversation_messages_path(@agent, @conversation), class: "chat-composer-form", data: { controller: "chat-composer voice-composer mention", mention_names_value: (@conversation.users.pluck(:first_name) + [@agent.name]).to_json, action: "submit->chat-composer#unlockAudio" } do |form| %>
+          <%= form_with url: chat_messages_path(@chat), class: "chat-composer-form", data: { controller: "chat-composer voice-composer mention", mention_names_value: (@chat.users.map(&:full_name) + @chat.agents.map(&:name)).uniq.to_json, action: "submit->chat-composer#unlockAudio" } do |form| %>
             <div class="chat-composer-inner">
-              <%= form.text_area :content, name: "message[content]", placeholder: @agent.running? ? "Message #{@agent.name}..." : "#{@agent.name} is #{@agent.status}", rows: 1, autofocus: @agent.running?, disabled: !@agent.running?, class: "chat-composer-input", data: { chat_composer_target: "input", mention_target: "input", action: "keydown->mention#onKeydown keydown->chat-composer#submitOnEnter input->mention#onInput input->chat-composer#autoResize" } %>
+              <% placeholder = if @agent.present?
+                composer_enabled ? "Message #{@agent.name}..." : "#{@agent.name} is #{@agent.status}"
+              else
+                "Message chat..."
+              end %>
+              <%= form.text_area :content, name: "message[content]", placeholder: placeholder, rows: 1, autofocus: composer_enabled, disabled: !composer_enabled, class: "chat-composer-input", data: { chat_composer_target: "input", mention_target: "input", action: "keydown->mention#onKeydown keydown->chat-composer#submitOnEnter input->mention#onInput input->chat-composer#autoResize" } %>
 
               <%= form.hidden_field :tts, name: "tts", value: "0", data: { voice_composer_target: "ttsField" } %>
               <%= form.file_field :audio, name: "message[audio]", hidden: true, direct_upload: false, data: { voice_composer_target: "audioField" } %>
@@ -182,7 +204,7 @@
             <circle cx="24" cy="18" r="1.5" fill="currentColor"/>
           </svg>
         </div>
-        <p>Select a conversation to start chatting</p>
+        <p>Select a chat to start chatting</p>
       </div>
     <% end %>
   </div>

@@ -2,12 +2,16 @@
 <% is_system = message.role == "system" %>
 <% is_tool_call = message.role == "assistant" && message.tool_calls.present? %>
 <% is_tool_result = message.role == "tool" %>
+<% chat = message.chat %>
+<% sender_user = (message.sender if message.sender.is_a?(User)) %>
+<% sender_agent = (message.sender if message.sender.is_a?(Agent)) || local_assigns[:agent] %>
+<% message_time = message.created_at.in_time_zone(Current.user&.time_zone).strftime("%-I:%M %p") %>
 <% if is_system %>
   <div class="chat-msg chat-msg-system" id="<%= dom_id(message) %>" data-created-at="<%= message.created_at.iso8601(6) %>">
     <div class="chat-msg-body">
       <div class="chat-msg-meta">
         <span class="chat-msg-sender">System</span>
-        <span class="chat-msg-time"><%= message.created_at.strftime("%-I:%M %p") %></span>
+        <span class="chat-msg-time"><%= message_time %></span>
       </div>
       <div class="chat-tool-box">
         <pre class="chat-tool-content"><%= message.content.truncate(500) %></pre>
@@ -27,11 +31,11 @@
     <div class="chat-msg-body">
       <div class="chat-msg-meta">
         <span class="chat-msg-meta-left">
-          <span class="chat-msg-sender"><%= agent.name %></span>
-          <span class="chat-msg-time"><%= message.created_at.strftime("%-I:%M %p") %></span>
+          <span class="chat-msg-sender"><%= sender_agent&.name || "Agent" %></span>
+          <span class="chat-msg-time"><%= message_time %></span>
         </span>
-        <% if message.conversation.kind_direct? %>
-          <%= button_to agent_conversation_message_path(message.conversation.agent, message.conversation, message), method: :delete, class: "chat-msg-delete", data: { turbo_confirm: "Delete this message?" } do %>
+        <% if chat&.direct? %>
+          <%= button_to chat_message_path(chat, message), method: :delete, class: "chat-msg-delete", data: { turbo_confirm: "Delete this message?" } do %>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           <% end %>
         <% end %>
@@ -64,7 +68,7 @@
     <div class="chat-msg-gutter">
       <% if is_user %>
         <div class="chat-avatar chat-avatar-user">
-          <%= message.user&.first_name&.first || "?" %>
+          <%= sender_user&.first_name&.first || "?" %>
         </div>
       <% else %>
         <div class="chat-avatar chat-avatar-agent">
@@ -78,11 +82,11 @@
     <div class="chat-msg-body">
       <div class="chat-msg-meta">
         <span class="chat-msg-meta-left">
-          <span class="chat-msg-sender"><%= is_user ? message.user&.first_name || "User" : agent.name %></span>
-          <span class="chat-msg-time"><%= message.created_at.strftime("%-I:%M %p") %></span>
+          <span class="chat-msg-sender"><%= is_user ? (sender_user&.first_name || "User") : (sender_agent&.name || "Agent") %></span>
+          <span class="chat-msg-time"><%= message_time %></span>
         </span>
-        <% if message.conversation.kind_direct? %>
-          <%= button_to agent_conversation_message_path(message.conversation.agent, message.conversation, message), method: :delete, class: "chat-msg-delete", data: { turbo_confirm: "Delete this message?" } do %>
+        <% if chat&.direct? %>
+          <%= button_to chat_message_path(chat, message), method: :delete, class: "chat-msg-delete", data: { turbo_confirm: "Delete this message?" } do %>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           <% end %>
         <% end %>
@@ -90,7 +94,7 @@
       <div class="chat-msg-text"><%= format_message_content(message) %></div>
       <div id="<%= dom_id(message, :audio) %>">
         <% if message.audio.attached? %>
-          <div class="audio-player" data-controller="audio-player" data-audio-player-autoplay-value="<%= local_assigns[:autoplay] ? "true" : "false" %>" data-audio-player-regenerate-url-value="<%= regenerate_agent_conversation_message_speech_path(agent, message.conversation, message) %>">
+          <div class="audio-player" data-controller="audio-player" data-audio-player-autoplay-value="<%= local_assigns[:autoplay] ? "true" : "false" %>" data-audio-player-regenerate-url-value="<%= regenerate_chat_message_speech_path(chat, message) %>">
             <button class="audio-player-btn" data-action="audio-player#toggle" data-audio-player-target="playBtn" type="button" aria-label="Play audio">
               <svg class="audio-player-icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
               <svg class="audio-player-icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>
@@ -108,7 +112,7 @@
             <audio src="<%= rails_blob_path(message.audio, only_path: true) %>" data-audio-player-target="audio" preload="metadata"></audio>
           </div>
         <% elsif !is_user && message.content.present? && local_assigns.fetch(:tts_available, false) %>
-          <div class="audio-player audio-player-synthesize" data-controller="audio-player" data-audio-player-synthesize-url-value="<%= agent_conversation_message_speech_path(agent, message.conversation, message) %>">
+          <div class="audio-player audio-player-synthesize" data-controller="audio-player" data-audio-player-synthesize-url-value="<%= chat_message_speech_path(chat, message) %>">
             <button class="audio-player-btn" data-action="audio-player#toggle" data-audio-player-target="playBtn" type="button" aria-label="Play audio">
               <svg class="audio-player-icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
               <svg class="audio-player-icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>

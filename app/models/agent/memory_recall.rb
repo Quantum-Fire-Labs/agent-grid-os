@@ -26,8 +26,8 @@ class Agent::MemoryRecall
     results
   end
 
-  def build_seed(conversation, current_message)
-    recent = conversation.messages
+  def build_seed(chat, current_message)
+    recent = chat.messages
       .where(compacted_at: nil)
       .where.not(role: "system")
       .order(created_at: :desc)

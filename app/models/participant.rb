@@ -1,4 +1,7 @@
 class Participant < ApplicationRecord
-  belongs_to :conversation
-  belongs_to :user
+  scope :users_only, -> { where(participatable_type: "User") }
+  scope :agents_only, -> { where(participatable_type: "Agent") }
+
+  belongs_to :chat
+  belongs_to :participatable, polymorphic: true, optional: true
 end

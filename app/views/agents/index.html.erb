@@ -44,7 +44,7 @@
           <div class="agent-card-footer">
             <span class="agent-network-mode"><%= agent.network_mode || "none" %></span>
             <% if agent.running? %>
-              <%= link_to "Chat", chat_path(agent.conversations.find_or_create_direct(Current.user)), class: "btn btn-primary btn-xs" %>
+              <%= link_to "Chat", chat_path(agent.find_or_create_direct_chat(Current.user)), class: "btn btn-primary btn-xs" %>
             <% end %>
           </div>
         </div>

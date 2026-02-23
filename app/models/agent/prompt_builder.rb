@@ -5,7 +5,7 @@ class Agent::PromptBuilder
     @agent = agent
   end
 
-  def system_prompt(conversation: nil, current_message: nil, current_message_record: nil)
+  def system_prompt(chat: nil, current_message: nil, current_message_record: nil)
     parts = []
     parts << identity
     parts << personality if agent.personality.present?
@@ -14,8 +14,8 @@ class Agent::PromptBuilder
     parts << skills_instructions if agent.respond_to?(:skills) && agent.account.skills.any?
     parts << plugin_instructions if agent.plugins.any?
     parts << apps_context if agent.workspace_enabled? || agent.custom_apps.any? || agent.granted_apps.any?
-    parts << recalled_memories(conversation, current_message)
-    parts << group_chat_context(conversation) if conversation&.kind_group?
+    parts << recalled_memories(chat, current_message)
+    parts << group_chat_context(chat) if chat&.group?
     parts << current_time(current_message_record)
     parts.compact.join("\n\n")
   end
@@ -69,15 +69,16 @@ class Agent::PromptBuilder
       "## Plugins\n\n#{sections.join("\n\n")}" if sections.any?
     end
 
-    def group_chat_context(conversation)
-      names = conversation.users.pluck(:first_name).join(", ")
-      "## Group Chat\n\nThis is a group conversation with multiple participants: #{names}. " \
+    def group_chat_context(chat)
+      names = chat.users.pluck(:first_name).join(", ")
+      "## Group Chat\n\nThis is a group chat with multiple participants: #{names}. " \
       "User messages are prefixed with [Name] to indicate the sender. " \
-      "Use @Name mentions when addressing or referring to specific participants (e.g. @#{conversation.users.first&.first_name})."
+      "Use @Name mentions when addressing or referring to specific participants (e.g. @#{chat.users.first&.first_name})."
     end
 
     def current_time(message)
-      tz = message&.user&.time_zone
+      sender_user = (message&.sender if message&.sender.is_a?(User))
+      tz = sender_user&.time_zone
       time = tz.present? ? Time.current.in_time_zone(tz) : Time.current
       "Current time: #{time.strftime("%A, %B %-d, %Y at %-I:%M %p %Z")}"
     end
@@ -153,7 +154,7 @@ class Agent::PromptBuilder
     def data_tools_instructions
       <<~INSTRUCTIONS.strip
         ### App data tools
-        You can read and write app data directly during conversation:
+        You can read and write app data directly during chat:
         - `list_app_tables` — list all tables in an app's database
         - `query_app_data` — query rows from a table (supports `where`, `limit`, `offset`)
         - `insert_app_data` — insert a row into a table
@@ -164,11 +165,11 @@ class Agent::PromptBuilder
       INSTRUCTIONS
     end
 
-    def recalled_memories(conversation, current_message)
-      return unless conversation && current_message
+    def recalled_memories(chat, current_message)
+      return unless chat && current_message
 
       recall = Agent::MemoryRecall.new(agent)
-      seed = recall.build_seed(conversation, current_message)
+      seed = recall.build_seed(chat, current_message)
       results = recall.recall(seed)
       return if results.blank?
 

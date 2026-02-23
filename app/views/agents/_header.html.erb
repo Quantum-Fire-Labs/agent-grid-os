@@ -1,4 +1,4 @@
-<%# Shared agent hero + tab navigation. Pass active_tab: "conversations"|"users"|etc. %>
+<%# Shared agent hero + tab navigation. Pass active_tab: "details"|"users"|etc. %>
 <div class="agent-profile-hero">
   <div class="agent-profile-hero-inner">
     <div class="breadcrumb">
@@ -32,7 +32,7 @@
 
     <div class="agent-profile-actions">
       <% if @agent.running? %>
-        <%= link_to chat_path(@agent.conversations.find_or_create_direct(Current.user)), class: "btn btn-primary btn-sm", data: { turbo_frame: "_top" } do %>
+        <%= link_to chat_path(@agent.find_or_create_direct_chat(Current.user)), class: "btn btn-primary btn-sm", data: { turbo_frame: "_top" } do %>
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 3C3 2.45 3.45 2 4 2H12C12.55 2 13 2.45 13 3V11C13 11.55 12.55 12 12 12H8L5 14.5V12H4C3.45 12 3 11.55 3 11V3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Chat
         <% end %>
@@ -58,9 +58,9 @@
       <span>Details</span>
     <% end %>
 
-    <%= link_to agent_conversations_path(@agent), class: "agent-profile-tab #{'agent-profile-tab-active' if active == 'conversations'}", data: { turbo_frame: "_top" } do %>
+    <%= link_to chats_path, class: "agent-profile-tab #{'agent-profile-tab-active' if active == 'conversations'}", data: { turbo_frame: "_top" } do %>
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M3.75 4.5C3.75 3.67 4.42 3 5.25 3H12.75C13.58 3 14.25 3.67 14.25 4.5V11.25C14.25 12.08 13.58 12.75 12.75 12.75H9.75L6.75 15.38V12.75H5.25C4.42 12.75 3.75 12.08 3.75 11.25V4.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7.5" cy="8.25" r="0.75" fill="currentColor"/><circle cx="9.75" cy="8.25" r="0.75" fill="currentColor"/><circle cx="12" cy="8.25" r="0.75" fill="currentColor"/></svg>
-      <span>Conversations</span>
+      <span>Chats</span>
     <% end %>
 
     <%= link_to agent_users_path(@agent), class: "agent-profile-tab #{'agent-profile-tab-active' if active == 'users'}", data: { turbo_frame: "_top" } do %>

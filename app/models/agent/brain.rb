@@ -1,16 +1,16 @@
 class Agent::Brain
   MAX_ITERATIONS = 50
 
-  attr_reader :agent, :conversation
+  attr_reader :agent, :chat
 
-  def initialize(agent, conversation)
+  def initialize(agent, chat)
     @agent = agent
-    @conversation = conversation
+    @chat = chat
   end
 
   def respond(user_message: nil, user_message_record: nil, on_message: nil, on_tool_complete: nil, &on_token)
     @system_prompt = prompt_builder.system_prompt(
-      conversation: conversation,
+      chat: chat,
       current_message: user_message,
       current_message_record: user_message_record
     )
@@ -25,15 +25,15 @@ class Agent::Brain
         on_message&.call(msg)
 
         if iterations >= MAX_ITERATIONS
-          return conversation.messages.create!(
+          return chat.messages.create!(message_sender_attrs(
             role: "assistant",
             content: "I wasn't able to complete the task within the tool call limit."
-          )
+          ))
         end
 
         response.tool_calls.each do |tc|
-          result = Agent::ToolRegistry.execute(tc.name, tc.parsed_arguments, agent: agent, context: { conversation: conversation })
-          tool_msg = conversation.messages.create!(role: "tool", content: result, tool_call_id: tc.id)
+          result = Agent::ToolRegistry.execute(tc.name, tc.parsed_arguments, agent: agent, context: { chat: chat })
+          tool_msg = chat.messages.create!(message_sender_attrs(role: "tool", content: result, tool_call_id: tc.id))
           on_message&.call(tool_msg)
         end
 
@@ -41,8 +41,8 @@ class Agent::Brain
       else
         next if response.content.blank?
 
-        message = conversation.messages.create!(role: "assistant", content: response.content)
-        Agent::Compaction.new(agent, conversation).maybe_compact
+        message = chat.messages.create!(message_sender_attrs(role: "assistant", content: response.content))
+        Agent::Compaction.new(agent, chat).maybe_compact
         return message
       end
     end
@@ -65,13 +65,14 @@ class Agent::Brain
     def build_messages
       messages = [ { role: "system", content: @system_prompt } ]
 
-      conversation.messages.where(compacted_at: nil).includes(:user).order(:created_at).each do |msg|
+      chat.messages.where(compacted_at: nil).includes(:sender).order(:created_at).each do |msg|
         content = msg.content
-        if msg.role == "user" && msg.user.present? && conversation.kind_group?
-          content = "[#{msg.user.first_name}]: #{content}"
+        sender_user = (msg.sender if msg.sender.is_a?(User))
+        if msg.role == "user" && sender_user.present? && chat.group?
+          content = "[#{sender_user.first_name}]: #{content}"
         end
-        # Remap "system" messages in conversation history to "user" role
-        # with a prefix. LLMs don't expect system messages mid-conversation
+        # Remap "system" messages in chat history to "user" role
+        # with a prefix. LLMs don't expect system messages mid-chat
         # and treat them as new instructions, causing duplicate responses.
         if msg.role == "system"
           content = "[System] #{content}"
@@ -89,13 +90,19 @@ class Agent::Brain
     end
 
     def persist_assistant(response)
-      conversation.messages.create!(
+      chat.messages.create!(message_sender_attrs(
         role: "assistant",
         content: response.content,
         tool_calls: response.tool_calls.map { |tc|
           { id: tc.id, type: "function", function: { name: tc.name, arguments: tc.arguments } }
         }
-      )
+      ))
+    end
+
+    def message_sender_attrs(attrs)
+      return attrs unless chat.is_a?(Chat)
+
+      attrs.merge(sender: agent)
     end
 
     def prompt_builder

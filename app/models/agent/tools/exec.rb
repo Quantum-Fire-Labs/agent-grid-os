@@ -32,10 +32,10 @@ class Agent::Tools::Exec < Agent::Tools::Base
     workspace = Agent::Workspace.new(agent)
 
     if arguments["async"]
-      conversation = context[:conversation]
-      return "Error: async exec requires a conversation context" unless conversation
+      chat = context[:chat]
+      return "Error: async exec requires a chat context" unless chat
 
-      workspace.exec_later(command, conversation: conversation, label: "exec", timeout: timeout)
+      workspace.exec_later(command, chat: chat, label: "exec", timeout: timeout)
       return "Command started in the background. You'll receive the result when it completes."
     end
 

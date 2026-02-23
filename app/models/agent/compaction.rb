@@ -1,12 +1,12 @@
 class Agent::Compaction
-  def initialize(agent, conversation)
+  def initialize(agent, chat)
     @agent = agent
-    @conversation = conversation
+    @chat = chat
   end
 
   def maybe_compact
     # Get uncompacted messages
-    uncompacted = @conversation.messages.where(compacted_at: nil).order(:created_at)
+    uncompacted = @chat.messages.where(compacted_at: nil).order(:created_at)
     return if uncompacted.count < 10
 
     # Call LLM to detect topic shift
@@ -17,7 +17,7 @@ class Agent::Compaction
 
     prompt_messages = [
       { role: "system", content: compaction_system_prompt },
-      { role: "user", content: "Here are the conversation messages:\n\n#{messages_text}" }
+      { role: "user", content: "Here are the chat messages:\n\n#{messages_text}" }
     ]
 
     response = provider.client.chat(messages: prompt_messages, model: @agent.model || provider.model)
@@ -40,7 +40,7 @@ class Agent::Compaction
 
     def compaction_system_prompt
       <<~PROMPT
-        You analyze conversation history and detect topic shifts. When the conversation has clearly moved to a new topic, you extract key information from the old topic as summary memories.
+        You analyze chat history and detect topic shifts. When the chat has clearly moved to a new topic, you extract key information from the old topic as summary memories.
 
         Respond with JSON only:
         {

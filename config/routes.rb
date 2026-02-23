@@ -1,14 +1,6 @@
 Rails.application.routes.draw do
   resources :agents do
     resource :awakening, only: %i[create update destroy], module: :agents
-    resources :conversations, only: %i[index create], module: :agents do
-      resources :messages, only: %i[index create destroy], module: :conversations do
-        resource :speech, only: :create, module: :messages do
-          post :regenerate, on: :member
-        end
-      end
-      resources :participants, only: %i[create destroy], module: :conversations
-    end
     resources :users, only: %i[index create destroy], module: :agents
     resources :models, only: %i[index create update destroy], module: :agents
     resource :settings, only: %i[show update], module: :agents
@@ -54,7 +46,14 @@ Rails.application.routes.draw do
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  resources :chats, only: %i[index show create]
+  resources :chats, only: %i[index show create] do
+    resources :messages, only: %i[index create destroy], module: :chats do
+      resource :speech, only: :create, module: :messages do
+        post :regenerate, on: :member
+      end
+    end
+    resources :participants, only: %i[create destroy], module: :chats
+  end
 
   root "chats#index"
 end

@@ -2,8 +2,8 @@ class User < ApplicationRecord
   belongs_to :account
   has_secure_password
   has_many :sessions, dependent: :destroy
-  has_many :participants, dependent: :destroy
-  has_many :conversations, through: :participants
+  has_many :participants, as: :participatable, dependent: :destroy
+  has_many :chats, through: :participants
   has_many :agent_users, dependent: :destroy
   has_many :agents, through: :agent_users
   has_many :custom_app_users, dependent: :destroy
@@ -17,4 +17,8 @@ class User < ApplicationRecord
   validates :last_name, presence: true
   validates :email_address, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 8 }, allow_nil: true
+
+  def full_name
+    "#{first_name} #{last_name}"
+  end
 end

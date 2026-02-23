@@ -1,6 +1,7 @@
 class Account < ApplicationRecord
   has_many :users, dependent: :destroy
   has_many :agents, dependent: :destroy
+  has_many :chats, dependent: :destroy
   has_many :custom_apps, dependent: :destroy
   has_many :skills, dependent: :destroy
   has_many :plugins, dependent: :destroy

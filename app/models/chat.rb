@@ -1,34 +1,65 @@
-class Conversation < ApplicationRecord
-  include Speakable
+class Chat < ApplicationRecord
+  include Chat::Speakable
 
-  belongs_to :agent
-  has_many :messages, dependent: :destroy
+  MENTION_TOKEN = /@([A-Za-z0-9_]+)/
+
+  belongs_to :account
   has_many :participants, dependent: :destroy
-  has_many :users, through: :participants
+  has_many :messages, dependent: :destroy
+  has_many :users, through: :participants, source: :participatable, source_type: "User"
+  has_many :agents, through: :participants, source: :participatable, source_type: "Agent"
 
-  enum :kind, %w[direct group].index_by(&:itself), default: "direct", prefix: true
+  def display_name(viewer: nil)
+    return title if title.present?
 
-  def self.direct_with(user)
-    joins(:participants)
-      .where(kind: "direct", participants: { user_id: user.id })
-      .first
+    names = participant_display_names
+    if viewer.is_a?(User)
+      viewer_name = viewer.full_name
+      names = names - [ viewer_name ] if names.size > 1
+    end
+
+    names.presence&.join(", ") || "Untitled Chat"
   end
 
-  def self.find_or_create_direct(user)
-    direct_with(user) || create!(kind: "direct").tap do |conversation|
-      conversation.participants.create!(user: user)
+  def participant_display_names
+    participants.includes(:participatable).filter_map do |participant|
+      entity = participant.participatable
+      next unless entity
+
+      if entity.is_a?(User)
+        entity.full_name
+      else
+        entity.name
+      end
     end
   end
 
-  def display_name
-    kind_direct? ? agent.name : users.map(&:first_name).join(", ")
+  def group?
+    participants.count >= 3
+  end
+
+  def direct?
+    participants.count == 2
+  end
+
+  def agent
+    agents.first
   end
 
   def last_message
     @last_message ||= messages.order(created_at: :desc).first
   end
 
-  def generate_agent_reply(tts_enabled: false)
+  def enqueue_agent_replies_for(message, tts_enabled: false)
+    return unless message.role == "user"
+    return unless message.sender.is_a?(User)
+
+    reply_agents_for(message).each do |reply_agent|
+      enqueue_agent_reply(agent: reply_agent, tts_enabled: tts_enabled)
+    end
+  end
+
+  def generate_agent_reply(agent:, tts_enabled: false)
     brain = Agent::Brain.new(agent, self)
     last_user_message = messages.where(role: "user").order(:created_at).last
     last_user_content = last_user_message&.content
@@ -40,14 +71,11 @@ class Conversation < ApplicationRecord
     accumulated = +""
     streaming = false
     stream_id = SecureRandom.hex(4)
-    helpers = ApplicationController.helpers
     tts = nil
 
-    reset_streaming = -> do
+    reset_streaming = lambda do
       tts&.reset(accumulated)
-      if streaming
-        Turbo::StreamsChannel.broadcast_remove_to(self, target: "streaming-message-#{stream_id}")
-      end
+      Turbo::StreamsChannel.broadcast_remove_to(self, target: "streaming-message-#{stream_id}") if streaming
       accumulated.clear
       streaming = false
       stream_id = SecureRandom.hex(4)
@@ -75,8 +103,16 @@ class Conversation < ApplicationRecord
     HTML
 
     pending_tool_messages = []
+    show_typing_indicator = lambda do
+      Turbo::StreamsChannel.broadcast_remove_to(self, target: "typing-indicator")
+      Turbo::StreamsChannel.broadcast_append_to(
+        self,
+        target: "chat-messages",
+        html: typing_indicator_html
+      )
+    end
 
-    on_message = ->(msg) do
+    on_message = lambda do |msg|
       reset_streaming.call
       if msg.role == "tool"
         pending_tool_messages << msg
@@ -84,39 +120,46 @@ class Conversation < ApplicationRecord
         Turbo::StreamsChannel.broadcast_append_to(
           self,
           target: "chat-messages",
-          partial: "agents/conversations/messages/message",
+          partial: "chats/messages/message",
           locals: { message: msg, agent: agent }
         )
       end
     end
 
-    on_tool_complete = -> do
+    on_tool_complete = lambda do
       stream_content = +""
       pending_tool_messages.each do |msg|
         html = ApplicationController.render(
-          partial: "agents/conversations/messages/message",
+          partial: "chats/messages/message",
           locals: { message: msg, agent: agent }
         )
         stream_content << "<turbo-stream action=\"append\" target=\"chat-messages\"><template>#{html}</template></turbo-stream>"
       end
+      stream_content << "<turbo-stream action=\"remove\" target=\"typing-indicator\"></turbo-stream>"
       stream_content << "<turbo-stream action=\"append\" target=\"chat-messages\"><template>#{typing_indicator_html}</template></turbo-stream>"
       Turbo::StreamsChannel.broadcast_stream_to(self, content: stream_content)
       pending_tool_messages.clear
     end
 
     tts = start_tts_stream if tts_enabled
+    show_typing_indicator.call
 
-    message = brain.respond(user_message: last_user_content, user_message_record: last_user_message, on_message: on_message, on_tool_complete: on_tool_complete) do |token|
+    message = brain.respond(
+      user_message: last_user_content,
+      user_message_record: last_user_message,
+      on_message: on_message,
+      on_tool_complete: on_tool_complete
+    ) do |token|
       accumulated << token
-
       tts&.feed(accumulated)
 
       unless streaming
         begin
-          Turbo::StreamsChannel.broadcast_replace_to(
+          Turbo::StreamsChannel.broadcast_remove_to(self, target: "typing-indicator")
+          Turbo::StreamsChannel.broadcast_append_to(
             self,
-            target: "typing-indicator",
-            partial: "agents/conversations/messages/streaming",
+            target: "chat-messages",
+            partial: "chats/messages/streaming",
             locals: { agent: agent, stream_id: stream_id, content: MarkdownHelper.to_html(accumulated).html_safe }
           )
           streaming = true
@@ -142,18 +185,17 @@ class Conversation < ApplicationRecord
     Turbo::StreamsChannel.broadcast_remove_to(self, target: "typing-indicator")
 
     if streaming
-      # Replace streaming wrapper with the full message partial
       Turbo::StreamsChannel.broadcast_replace_to(
         self,
         target: "streaming-message-#{stream_id}",
-        partial: "agents/conversations/messages/message",
+        partial: "chats/messages/message",
         locals: { message: message, agent: agent }
       )
     else
       Turbo::StreamsChannel.broadcast_append_to(
         self,
         target: "chat-messages",
-        partial: "agents/conversations/messages/message",
+        partial: "chats/messages/message",
         locals: { message: message, agent: agent }
       )
     end
@@ -161,22 +203,17 @@ class Conversation < ApplicationRecord
     tts&.finish(message)
   rescue Providers::Error => e
     Rails.logger.error("generate_agent_reply provider error: #{e.message}")
-    broadcast_error("Provider error: #{e.message}", stream_id: stream_id)
+    broadcast_error(e.message, stream_id: stream_id)
   rescue StandardError => e
     Rails.logger.error("generate_agent_reply failed: #{e.class} - #{e.message}")
     broadcast_error(e.message, stream_id: stream_id)
   end
 
-  def enqueue_agent_reply(tts_enabled: false)
-    Agent::ReplyJob.perform_later(self, tts_enabled: tts_enabled)
+  def enqueue_agent_reply(agent:, tts_enabled: false)
+    Agent::ReplyJob.perform_later(self, agent: agent, tts_enabled: tts_enabled)
   end
 
   private
-
-    def dom_id(record, prefix = nil)
-      ActionView::RecordIdentifier.dom_id(record, prefix)
-    end
-
     def broadcast_error(message, stream_id: nil)
       Turbo::StreamsChannel.broadcast_remove_to(self, target: "streaming-message-#{stream_id}") if stream_id
       Turbo::StreamsChannel.broadcast_remove_to(self, target: "typing-indicator")
@@ -184,8 +221,29 @@ class Conversation < ApplicationRecord
       Turbo::StreamsChannel.broadcast_append_to(
         self,
         target: "chat-messages",
-        partial: "agents/conversations/messages/error",
+        partial: "chats/messages/error",
         locals: { error: message }
       )
+    end
+
+    def reply_agents_for(message)
+      present_agents = agents.to_a
+      return [] if present_agents.empty?
+      return present_agents if present_agents.one?
+
+      tagged_tokens = mentioned_tokens(message.content)
+      present_agents.select { |a| tagged_tokens.include?(mention_token_for_agent(a)) }
+    end
+
+    def mentioned_tokens(content)
+      (content || "").scan(MENTION_TOKEN).flatten.map { |token| normalize_mention_token(token) }.uniq
+    end
+
+    def mention_token_for_agent(agent)
+      normalize_mention_token(agent.name)
+    end
+
+    def normalize_mention_token(text)
+      text.to_s.downcase.gsub(/[^a-z0-9]/, "")
     end
 end

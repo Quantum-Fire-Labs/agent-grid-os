@@ -2,7 +2,8 @@ class Agent < ApplicationRecord
   belongs_to :account
   has_many :agent_users, dependent: :destroy
   has_many :users, through: :agent_users
-  has_many :conversations, dependent: :destroy
+  has_many :participants, as: :participatable, dependent: :destroy
+  has_many :chats, through: :participants
   has_many :memories, dependent: :destroy
   has_many :agent_models, dependent: :destroy
   has_many :providers, through: :agent_models
@@ -53,6 +54,30 @@ class Agent < ApplicationRecord
 
   def accessible_apps
     CustomApp.where(id: custom_app_ids + granted_app_ids)
+  end
+
+  def find_or_create_direct_chat(user)
+    existing = account.chats
+      .joins(:participants)
+      .group("chats.id")
+      .having("COUNT(*) = 2")
+      .having(
+        "SUM(CASE WHEN participants.participatable_type = ? AND participants.participatable_id = ? THEN 1 ELSE 0 END) = 1",
+        "User",
+        user.id
+      )
+      .having(
+        "SUM(CASE WHEN participants.participatable_type = ? AND participants.participatable_id = ? THEN 1 ELSE 0 END) = 1",
+        "Agent",
+        id
+      )
+      .first
+    return existing if existing
+
+    account.chats.create!.tap do |chat|
+      chat.participants.create!(participatable: user)
+      chat.participants.create!(participatable: self)
+    end
   end
 
   private

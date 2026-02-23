@@ -2719,89 +2719,6 @@ fieldset {
   display: flex;
 }
 
-/* ───── Conversations list ───── */
-.conversations-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.conversation-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text-primary);
-  transition: all 0.15s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.conversation-row:hover {
-  border-color: var(--accent);
-  box-shadow: var(--shadow-md);
-  color: var(--text-primary);
-}
-
-.conversation-row-left {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  min-width: 0;
-}
-
-.conversation-kind-badge {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  padding: 0.1875rem 0.5rem;
-  border-radius: 100px;
-  text-transform: capitalize;
-  letter-spacing: 0.02em;
-  flex-shrink: 0;
-}
-
-.badge-direct {
-  color: var(--text-tertiary);
-  background-color: var(--bg-tertiary);
-}
-
-.badge-group {
-  color: var(--accent);
-  background-color: color-mix(in srgb, var(--accent) 10%, transparent);
-}
-
-.conversation-row-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  min-width: 0;
-}
-
-.conversation-row-name {
-  font-size: 0.9375rem;
-  font-weight: 600;
-}
-
-.conversation-row-preview {
-  font-size: 0.8125rem;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.conversation-row-right {
-  flex-shrink: 0;
-  margin-left: 1rem;
-}
-
-.conversation-row-time {
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-}
-
 /* ───── Chat participants bar ───── */
 .chat-participants-bar {
   display: flex;
@@ -3412,7 +3329,7 @@ fieldset {
     display: flex;
   }
 
-  /* When a conversation is loaded, auto-show panel */
+  /* When a chat is loaded, auto-show panel */
   .chat-hub:has(.chat-page) {
     /* handled by JS */
   }
