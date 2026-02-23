@@ -42,6 +42,6 @@ class Persona
       instructions: instructions,
       network_mode: network_mode,
       workspace_enabled: workspace_enabled
-    }
+    }.merge(recommended_settings.symbolize_keys)
   end
 end

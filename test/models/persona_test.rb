@@ -22,7 +22,7 @@ class PersonaTest < ActiveSupport::TestCase
 
   test "persona exposes expected attributes" do
     persona = Persona.find("the_orchestrator")
-    assert_equal "Agent Operations Manager", persona.title
+    assert_equal "The Orchestrator", persona.title
     assert persona.description.present?
     assert persona.personality.present?
     assert persona.instructions.present?
@@ -71,5 +71,12 @@ class PersonaTest < ActiveSupport::TestCase
     assert_equal persona.instructions, attrs[:instructions]
     assert_equal persona.network_mode, attrs[:network_mode]
     assert_equal persona.workspace_enabled, attrs[:workspace_enabled]
+  end
+
+  test "agent_attributes includes recommended_settings" do
+    persona = Persona.find("the_orchestrator")
+    attrs = persona.agent_attributes
+
+    assert_equal true, attrs[:orchestrator]
   end
 end

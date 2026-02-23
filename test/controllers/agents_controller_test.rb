@@ -22,7 +22,7 @@ class AgentsControllerTest < ActionDispatch::IntegrationTest
     get new_agent_path, params: { persona: "the_orchestrator" }
 
     assert_response :success
-    assert_select "h1", text: /Agent Operations Manager/
+    assert_select "h1", text: /The Orchestrator/
     assert_select "input[name='from_persona'][value='the_orchestrator']"
   end
 
@@ -81,7 +81,7 @@ class AgentsControllerTest < ActionDispatch::IntegrationTest
     }
 
     assert_response :unprocessable_entity
-    assert_select "h1", text: /Agent Operations Manager/
+    assert_select "h1", text: /The Orchestrator/
     assert_select "input[name='from_persona'][value='the_orchestrator']"
   end
 
