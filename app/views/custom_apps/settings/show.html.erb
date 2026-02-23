@@ -1,67 +1,158 @@
 <div class="dashboard">
   <div class="dashboard-header">
-    <h1><%= @custom_app.name %> Settings</h1>
+    <h1><%= @custom_app.name %></h1>
     <div class="dashboard-actions">
-      <%= link_to "Back to App", custom_app_path(@custom_app), class: "btn btn-ghost" %>
+      <%= link_to "Open App", custom_app_path(@custom_app), class: "btn btn-primary" %>
     </div>
   </div>
 
-  <div class="settings-section">
-    <div class="settings-section-header">
-      <h2 class="settings-section-title">Assigned Users</h2>
-    </div>
-
-    <% if @custom_app_users.any? %>
-      <div class="user-list">
-        <% @custom_app_users.each do |custom_app_user| %>
-          <% user = custom_app_user.user %>
-          <div class="user-row">
-            <div class="user-row-left">
-              <div class="user-avatar"><%= user.first_name[0] %><%= user.last_name[0] %></div>
-              <div class="user-row-info">
-                <span class="user-row-name">
-                  <%= user.first_name %> <%= user.last_name %>
-                  <span class="user-badge-role user-badge-role-<%= user.role %>"><%= user.role.capitalize %></span>
-                </span>
-                <span class="user-row-email"><%= user.email_address %></span>
-              </div>
-            </div>
-            <div class="user-row-right">
-              <%= button_to "Remove", custom_app_user_path(@custom_app, custom_app_user), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Remove #{user.first_name} from #{@custom_app.name}?" } %>
-            </div>
+  <div class="app-settings-layout">
+    <%# ── App overview ── %>
+    <div class="app-settings-overview">
+      <div class="app-settings-icon">
+        <% if @custom_app.icon_display == :image %>
+          <%= image_tag @custom_app.icon_image, class: "app-settings-icon-img" %>
+        <% elsif @custom_app.icon_display == :emoji %>
+          <span class="app-settings-icon-emoji"><%= @custom_app.icon_emoji %></span>
+        <% else %>
+          <span class="app-settings-icon-initial"><%= @custom_app.name.first.upcase %></span>
+        <% end %>
+      </div>
+      <div class="app-settings-meta">
+        <div class="app-settings-meta-row">
+          <span class="app-settings-meta-label">Status</span>
+          <span class="agent-status status-<%= @custom_app.status %>"><%= @custom_app.status.capitalize %></span>
+        </div>
+        <div class="app-settings-meta-row">
+          <span class="app-settings-meta-label">Owner</span>
+          <span class="app-settings-meta-value"><%= @custom_app.agent.name %></span>
+        </div>
+        <div class="app-settings-meta-row">
+          <span class="app-settings-meta-label">Slug</span>
+          <span class="app-settings-meta-value app-settings-mono"><%= @custom_app.slug %></span>
+        </div>
+        <% if @custom_app.description.present? %>
+          <div class="app-settings-meta-row">
+            <span class="app-settings-meta-label">Description</span>
+            <span class="app-settings-meta-value"><%= @custom_app.description %></span>
           </div>
         <% end %>
       </div>
-    <% else %>
-      <p class="settings-empty">No users assigned. All users with agent access can use this app.</p>
-    <% end %>
-  </div>
+    </div>
 
-  <% if @available_users.any? %>
+    <%# ── Agent access ── %>
     <div class="settings-section">
       <div class="settings-section-header">
-        <h2 class="settings-section-title">Add Users</h2>
+        <h2 class="settings-section-title">Agent Access</h2>
       </div>
+      <p class="app-settings-hint">Other agents that can read and write this app's data.</p>
 
-      <div class="user-list">
-        <% @available_users.each do |user| %>
-          <div class="user-row">
-            <div class="user-row-left">
-              <div class="user-avatar"><%= user.first_name[0] %><%= user.last_name[0] %></div>
-              <div class="user-row-info">
-                <span class="user-row-name">
-                  <%= user.first_name %> <%= user.last_name %>
-                  <span class="user-badge-role user-badge-role-<%= user.role %>"><%= user.role.capitalize %></span>
-                </span>
-                <span class="user-row-email"><%= user.email_address %></span>
+      <% if @agent_accesses.any? %>
+        <div class="app-access-list">
+          <% @agent_accesses.each do |access| %>
+            <div class="app-access-row">
+              <div class="app-access-row-left">
+                <div class="app-access-avatar app-access-avatar-agent"><%= access.agent.name.first.upcase %></div>
+                <div class="app-access-info">
+                  <span class="app-access-name"><%= access.agent.name %></span>
+                  <span class="app-access-detail"><%= access.agent.title || access.agent.status.capitalize %></span>
+                </div>
+              </div>
+              <div class="app-access-row-right">
+                <%= button_to "Revoke", custom_app_agent_access_path(@custom_app, access), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Revoke #{access.agent.name}'s access to #{@custom_app.name}?" } %>
               </div>
             </div>
-            <div class="user-row-right">
-              <%= button_to "Add", custom_app_users_path(@custom_app, user_id: user.id), method: :post, class: "btn btn-primary btn-sm" %>
-            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="settings-empty">No other agents have access.</p>
+      <% end %>
+
+      <% if @available_agents.any? %>
+        <details class="app-settings-add-section">
+          <summary class="app-settings-add-trigger">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Grant agent access
+          </summary>
+          <div class="app-access-list">
+            <% @available_agents.each do |agent| %>
+              <div class="app-access-row">
+                <div class="app-access-row-left">
+                  <div class="app-access-avatar app-access-avatar-agent"><%= agent.name.first.upcase %></div>
+                  <div class="app-access-info">
+                    <span class="app-access-name"><%= agent.name %></span>
+                    <span class="app-access-detail"><%= agent.title || agent.status.capitalize %></span>
+                  </div>
+                </div>
+                <div class="app-access-row-right">
+                  <%= button_to "Grant", custom_app_agent_accesses_path(@custom_app, agent_id: agent.id), method: :post, class: "btn btn-primary btn-sm" %>
+                </div>
+              </div>
+            <% end %>
           </div>
-        <% end %>
-      </div>
+        </details>
+      <% end %>
     </div>
-  <% end %>
+
+    <%# ── User access ── %>
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <h2 class="settings-section-title">User Access</h2>
+      </div>
+      <p class="app-settings-hint">Specific users who can access this app. When empty, all users with agent access can use it.</p>
+
+      <% if @custom_app_users.any? %>
+        <div class="app-access-list">
+          <% @custom_app_users.each do |custom_app_user| %>
+            <% user = custom_app_user.user %>
+            <div class="app-access-row">
+              <div class="app-access-row-left">
+                <div class="app-access-avatar"><%= user.first_name[0] %><%= user.last_name[0] %></div>
+                <div class="app-access-info">
+                  <span class="app-access-name">
+                    <%= user.first_name %> <%= user.last_name %>
+                    <span class="user-badge-role user-badge-role-<%= user.role %>"><%= user.role.capitalize %></span>
+                  </span>
+                  <span class="app-access-detail"><%= user.email_address %></span>
+                </div>
+              </div>
+              <div class="app-access-row-right">
+                <%= button_to "Remove", custom_app_user_path(@custom_app, custom_app_user), method: :delete, class: "btn btn-ghost btn-sm text-danger", data: { turbo_confirm: "Remove #{user.first_name} from #{@custom_app.name}?" } %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="settings-empty">No users assigned. All users with agent access can use this app.</p>
+      <% end %>
+
+      <% if @available_users.any? %>
+        <details class="app-settings-add-section">
+          <summary class="app-settings-add-trigger">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add user
+          </summary>
+          <div class="app-access-list">
+            <% @available_users.each do |user| %>
+              <div class="app-access-row">
+                <div class="app-access-row-left">
+                  <div class="app-access-avatar"><%= user.first_name[0] %><%= user.last_name[0] %></div>
+                  <div class="app-access-info">
+                    <span class="app-access-name">
+                      <%= user.first_name %> <%= user.last_name %>
+                      <span class="user-badge-role user-badge-role-<%= user.role %>"><%= user.role.capitalize %></span>
+                    </span>
+                    <span class="app-access-detail"><%= user.email_address %></span>
+                  </div>
+                </div>
+                <div class="app-access-row-right">
+                  <%= button_to "Add", custom_app_users_path(@custom_app, user_id: user.id), method: :post, class: "btn btn-primary btn-sm" %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </details>
+      <% end %>
+    </div>
+  </div>
 </div>

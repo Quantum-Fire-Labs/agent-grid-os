@@ -2623,11 +2623,35 @@ fieldset {
 .audio-player-regenerate:active { transform: rotate(-90deg); }
 .audio-player.is-loading .audio-player-regenerate { pointer-events: none; opacity: 0.3; }
 
-/* Synthesize-only state (play button only, no track/time/wave) */
+/* Synthesize-only state — discreet inline play icon */
 .audio-player-synthesize {
-  padding: 0.375rem;
+  padding: 0;
   gap: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  margin-top: 0.25rem;
 }
+.audio-player-synthesize:hover {
+  border-color: transparent;
+  box-shadow: none;
+}
+.audio-player-synthesize .audio-player-btn {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  color: var(--text-tertiary);
+}
+.audio-player-synthesize .audio-player-btn svg {
+  width: 11px;
+  height: 11px;
+}
+.audio-player-synthesize .audio-player-btn:hover {
+  background: transparent;
+  color: var(--accent);
+  transform: none;
+}
+.audio-player-synthesize .audio-player-btn:active { transform: scale(0.9); }
 .audio-player-synthesize .audio-player-wave,
 .audio-player-synthesize .audio-player-track,
 .audio-player-synthesize .audio-player-time { display: none; }
@@ -3487,6 +3511,202 @@ body:has(.chat-hub) .main-content {
 .app-card-agent {
   font-size: 0.8rem;
   color: var(--text-tertiary);
+}
+
+/* ───── App settings ───── */
+.app-settings-layout {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.app-settings-overview {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.app-settings-icon {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.app-settings-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-settings-icon-emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.app-settings-icon-initial {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.app-settings-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.app-settings-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.app-settings-meta-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.app-settings-meta-value {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+
+.app-settings-mono {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 0.8125rem;
+  padding: 0.125rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+.app-settings-hint {
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.app-access-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.app-access-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0.875rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.app-access-row:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+.app-access-row-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.app-access-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-tertiary));
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app-access-avatar-agent {
+  border-radius: 8px;
+}
+
+.app-access-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  min-width: 0;
+}
+
+.app-access-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.app-access-detail {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-access-row-right {
+  flex-shrink: 0;
+  margin-left: 0.75rem;
+}
+
+.app-settings-add-section {
+  margin-top: 0.75rem;
+}
+
+.app-settings-add-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0.375rem 0;
+  list-style: none;
+  transition: opacity 0.15s ease;
+}
+
+.app-settings-add-trigger:hover {
+  opacity: 0.8;
+}
+
+.app-settings-add-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.app-settings-add-section[open] .app-settings-add-trigger {
+  margin-bottom: 0.625rem;
 }
 
 .app-container {
