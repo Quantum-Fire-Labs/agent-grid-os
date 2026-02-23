@@ -153,10 +153,14 @@ class Providers::OpenAi < Providers::Client
     def normalize_tool_calls(raw)
       return [] if raw.blank?
 
-      raw.map do |tc|
+      raw.filter_map do |tc|
+        id = tc["id"]
+        name = tc.dig("function", "name")
+        next if id.blank? || name.blank?
+
         Providers::ToolCall.new(
-          id: tc["id"],
-          name: tc.dig("function", "name"),
+          id: id,
+          name: name,
           arguments: tc.dig("function", "arguments")
         )
       end

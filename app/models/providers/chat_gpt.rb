@@ -193,7 +193,9 @@ class Providers::ChatGpt < Providers::Client
     def normalize_tool_calls(raw)
       return [] if raw.empty?
 
-      raw.map do |id, tc|
+      raw.filter_map do |id, tc|
+        next if id.blank? || tc[:name].blank?
+
         Providers::ToolCall.new(
           id: from_fc_id(id),
           name: tc[:name],
