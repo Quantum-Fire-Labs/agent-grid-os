@@ -13,6 +13,7 @@ class Agent::PromptBuilder
     parts << network_access if agent.workspace_enabled?
     parts << skills_instructions if agent.respond_to?(:skills) && agent.account.skills.any?
     parts << plugin_instructions if agent.plugins.any?
+    parts << orchestrator_context if agent.orchestrator?
     parts << apps_context if agent.workspace_enabled? || agent.custom_apps.any? || agent.granted_apps.any?
     parts << recalled_memories(chat, current_message)
     parts << group_chat_context(chat) if chat&.group?
@@ -163,6 +164,21 @@ class Agent::PromptBuilder
 
         All data tools take an `app` parameter (the app slug) to identify which app's database to use.
       INSTRUCTIONS
+    end
+
+    def orchestrator_context
+      <<~PROMPT.strip
+        ## Orchestrator
+
+        You are an orchestrator agent with the ability to manage other agents in this account. You have the following agent management tools:
+
+        - `list_agents` — List all agents in the account with their name, title, status, and orchestrator flag
+        - `get_agent` — Get full details of a specific agent by name
+        - `create_agent` — Create a new agent with a name, title, description, personality, instructions, network mode, and workspace setting
+        - `update_agent` — Update an existing agent's configuration by name
+
+        Use these tools to inspect, create, and configure agents as needed. All agents you manage belong to the same account.
+      PROMPT
     end
 
     def recalled_memories(chat, current_message)

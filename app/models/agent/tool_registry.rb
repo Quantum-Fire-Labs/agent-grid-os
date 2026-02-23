@@ -28,9 +28,17 @@ class Agent::ToolRegistry
     "unregister_app"     => Agent::Tools::UnregisterApp
   }.freeze
 
+  ORCHESTRATOR_TOOLS = {
+    "list_agents"        => Agent::Tools::ListAgents,
+    "get_agent"          => Agent::Tools::GetAgent,
+    "create_agent"       => Agent::Tools::CreateAgent,
+    "update_agent"       => Agent::Tools::UpdateAgent
+  }.freeze
+
   def self.definitions(agent:)
     tools = TOOLS.values
     tools += DATA_TOOLS.values if agent.accessible_apps.any?
+    tools += ORCHESTRATOR_TOOLS.values if agent.orchestrator?
     if agent.workspace_enabled?
       tools += WORKSPACE_TOOLS.values
       tools += agent.custom_tools.map { |ct| ct }
@@ -61,7 +69,7 @@ class Agent::ToolRegistry
       return execute_plugin_tool(plugin, name, arguments, agent: agent, context: context)
     end
 
-    tool_class = TOOLS[name] || DATA_TOOLS[name] || (agent.workspace_enabled? && WORKSPACE_TOOLS[name])
+    tool_class = TOOLS[name] || DATA_TOOLS[name] || (agent.orchestrator? && ORCHESTRATOR_TOOLS[name]) || (agent.workspace_enabled? && WORKSPACE_TOOLS[name])
     return "Unknown tool: #{name}" unless tool_class
 
     tool_class.new(agent: agent, arguments: arguments, context: context).call

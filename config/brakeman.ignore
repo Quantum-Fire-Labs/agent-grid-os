@@ -24,8 +24,18 @@
       "fingerprint": "87cd80d6e5570f981e2c9d7bc96e9664f8c103bc34f1d748366e72cc215d38ff",
       "code": "send_file(accessible_custom_apps.published.find(params[:custom_app_id]).resolve_asset(params[:path]), :disposition => :inline)",
       "note": "Safe: resolve_asset validates against directory traversal"
+    },
+    {
+      "fingerprint": "af63a6fb7612f6a5eda0e49761b4ebfff86cb0e8cc31c88783674ed271792219",
+      "code": "FileUtils.rm_rf(Agent::Workspace.new(self).path)",
+      "note": "Safe: path derived from agent ID (storage/agents/{id}), not user input"
+    },
+    {
+      "fingerprint": "3910109a43c9048eb1905984631ac15d46ad50140c21d7e35686255f5f6c7cc8",
+      "code": "FileUtils.rm_rf(Agent::Workspace.new(self).home_path)",
+      "note": "Safe: path derived from agent ID (storage/agents/{id}/home), not user input"
     }
   ],
-  "updated": "2026-02-21",
+  "updated": "2026-02-23",
   "brakeman_version": "8.0.2"
 }
