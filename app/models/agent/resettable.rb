@@ -14,6 +14,7 @@ module Agent::Resettable
   def factory_reset
     transaction do
       wipe_all_memory
+      chats.destroy_all
       custom_apps.destroy_all
     end
     reset_workspace if workspace_enabled?
@@ -22,7 +23,7 @@ module Agent::Resettable
   private
     def wipe_all_memory
       memories.destroy_all
-      chats.destroy_all
+      chats.each { |chat| chat.messages.destroy_all }
     end
 
     def wipe_memory_since(cutoff)
