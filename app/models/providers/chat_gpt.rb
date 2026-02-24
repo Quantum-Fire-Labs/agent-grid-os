@@ -197,22 +197,16 @@ class Providers::ChatGpt < Providers::Client
         next if id.blank? || tc[:name].blank?
 
         Providers::ToolCall.new(
-          id: from_fc_id(id),
+          id: id,
           name: tc[:name],
           arguments: tc[:arguments]
         )
       end
     end
 
-    # Convert internal call_xxx IDs → fc_xxx for the API
+    # Convert internal call_xxx IDs → fc_xxx for the ChatGPT Responses API
     def to_fc_id(id)
       return id unless id
-      id.start_with?("call_") ? id.sub("call_", "fc_") : id
-    end
-
-    # Convert API fc_xxx IDs → internal call_xxx
-    def from_fc_id(id)
-      return id unless id
-      id.start_with?("fc_") ? id.sub("fc_", "call_") : id
+      id.start_with?("call_") ? id.sub("call_", "fc_") : "fc_#{id}"
     end
 end

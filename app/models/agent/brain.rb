@@ -100,8 +100,12 @@ class Agent::Brain
         end
 
         entry = { role: role, content: content }
-        entry[:tool_calls] = msg.tool_calls if msg.tool_calls.present?
-        entry[:tool_call_id] = msg.tool_call_id if msg.tool_call_id.present?
+        if msg.tool_calls.present?
+          entry[:tool_calls] = msg.tool_calls.map { |tc|
+            tc.merge("id" => Providers::ToolCall.normalize_id(tc["id"]))
+          }
+        end
+        entry[:tool_call_id] = Providers::ToolCall.normalize_id(msg.tool_call_id) if msg.tool_call_id.present?
         messages << entry
       end
 

@@ -99,7 +99,7 @@ class Agent::Workspace
     # Create a synthetic tool-call pair so the LLM sees proper tool protocol.
     # Without this, the async result has no tool_call_id and gets remapped to
     # role: "user", causing the LLM to treat it as user input and loop.
-    tool_call_id = "async_#{SecureRandom.hex(4)}"
+    tool_call_id = "call_async_#{SecureRandom.hex(4)}"
 
     chat.messages.create!(
       role: "assistant",

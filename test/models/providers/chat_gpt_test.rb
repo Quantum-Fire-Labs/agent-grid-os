@@ -141,16 +141,8 @@ class Providers::ChatGptTest < ActiveSupport::TestCase
     assert_equal "fc_abc", @client.send(:to_fc_id, "call_abc")
   end
 
-  test "to_fc_id passes through non-call_ ids" do
-    assert_equal "fc_abc", @client.send(:to_fc_id, "fc_abc")
-  end
-
-  test "from_fc_id converts fc_ prefix to call_" do
-    assert_equal "call_abc", @client.send(:from_fc_id, "fc_abc")
-  end
-
-  test "from_fc_id passes through non-fc_ ids" do
-    assert_equal "call_abc", @client.send(:from_fc_id, "call_abc")
+  test "to_fc_id wraps non-call_ ids with fc_ prefix" do
+    assert_equal "fc_raw_uuid", @client.send(:to_fc_id, "raw_uuid")
   end
 
   private
