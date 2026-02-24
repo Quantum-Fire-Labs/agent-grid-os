@@ -69,7 +69,7 @@ class ClaudeCode
     def build_command(model:, session_id:, api_key:)
       parts = []
       parts << "export ANTHROPIC_API_KEY=#{Shellwords.shellescape(api_key)} &&" if api_key
-      parts << "claude -p --output-format stream-json"
+      parts << "claude -p --verbose --output-format stream-json"
       parts << "--model #{Shellwords.shellescape(model)}" if model.present?
       parts << "-r #{Shellwords.shellescape(session_id)}" if session_id.present?
       parts.join(" ")

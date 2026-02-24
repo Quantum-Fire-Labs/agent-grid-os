@@ -13,7 +13,7 @@ module Plugin::Providable
     return nil unless provider?
 
     entrypoint_file = provider_config["entrypoint"]
-    require path.join(entrypoint_file).to_s
+    load path.join(entrypoint_file).to_s
     name.classify.constantize
   end
 end
