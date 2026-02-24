@@ -126,7 +126,7 @@ class Providers::OpenAi < Providers::Client
 
           delta = choice["delta"] || {}
 
-          if delta["content"].present?
+          unless delta["content"].nil?
             content_parts << delta["content"]
             on_token.call(delta["content"])
           end

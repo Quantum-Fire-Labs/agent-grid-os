@@ -156,7 +156,7 @@ class Providers::ChatGpt < Providers::Client
           case event["type"]
           when "response.output_text.delta"
             delta = event["delta"]
-            if delta.present?
+            unless delta.nil?
               content_parts << delta
               on_token&.call(delta)
             end
