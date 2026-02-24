@@ -33,6 +33,12 @@
                   <option value="true" <%= "selected" if existing&.value == "true" %>>true</option>
                   <option value="false" <%= "selected" if existing&.value == "false" %>>false</option>
                 </select>
+              <% elsif schema["type"] == "select" %>
+                <select name="value">
+                  <% (schema["options"] || []).each do |opt| %>
+                    <option value="<%= opt %>" <%= "selected" if existing&.value == opt || (!existing && schema["default"] == opt) %>><%= opt %></option>
+                  <% end %>
+                </select>
               <% else %>
                 <input type="text" name="value" value="<%= existing&.value %>" placeholder="<%= schema["required"] ? "Required" : "Optional" %>">
               <% end %>

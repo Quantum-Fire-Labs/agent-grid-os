@@ -29,6 +29,15 @@ class Agent::WorkspaceTest < ActiveSupport::TestCase
     assert_equal "agentgridos-workspace-#{@agent.id}", @workspace.container_name
   end
 
+  # ── stream_exec ──
+
+  test "stream_exec raises DockerError when container is not running" do
+    # Agent fixture has no running container, so running? returns false
+    assert_raises(Agent::Workspace::DockerError) do
+      @workspace.stream_exec("echo hello") { |_line| }
+    end
+  end
+
   # ── build_run_command volume mounts ──
 
   test "build_run_command uses host paths for volume mounts when HOST_STORAGE_PATH is set" do

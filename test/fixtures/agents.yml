@@ -4,7 +4,7 @@ one:
   title: Research Assistant
   description: Helps with research
   status: asleep
-  network_mode: none
+  network_mode: full
 
 three:
   account: one

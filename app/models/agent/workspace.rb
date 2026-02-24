@@ -81,6 +81,33 @@ class Agent::Workspace
     { stdout: "", stderr: "Error: command timed out after #{timeout}s", exit_code: 124 }
   end
 
+  def stream_exec(command, stdin: nil, timeout: 600, &on_output)
+    unless running?
+      raise DockerError, "workspace container is not running"
+    end
+
+    cmd = [ "docker", "exec" ]
+    cmd += [ "-i" ] if stdin
+    cmd += [ container_name, "bash", "-c", command ]
+
+    Open3.popen3(*cmd) do |stdin_io, stdout_io, stderr_io, wait_thr|
+      stdin_io.write(stdin) if stdin
+      stdin_io.close
+
+      Timeout.timeout(timeout) do
+        stdout_io.each_line { |line| on_output.call(line) }
+      end
+
+      status = wait_thr.value
+      unless status.success?
+        stderr_output = stderr_io.read
+        raise DockerError, "exit #{status.exitstatus}: #{stderr_output.truncate(500)}"
+      end
+    end
+  rescue Timeout::Error
+    raise DockerError, "command timed out after #{timeout}s"
+  end
+
   def exec_later(command, chat:, label:, timeout: 600, stdin: nil)
     Agent::WorkspaceExecJob.perform_later(agent, chat, command, label: label, timeout: timeout, stdin: stdin)
   end

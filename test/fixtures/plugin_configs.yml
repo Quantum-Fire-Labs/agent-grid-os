@@ -1,0 +1,13 @@
+claude_code_mode_provider:
+  plugin: claude_code
+  configurable_type: Agent
+  configurable_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  key: MODE
+  value: provider
+
+claude_code_api_key:
+  plugin: claude_code
+  configurable_type: Account
+  configurable_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  key: ANTHROPIC_API_KEY
+  value: test-api-key

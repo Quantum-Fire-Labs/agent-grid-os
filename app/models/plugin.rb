@@ -1,5 +1,6 @@
 class Plugin < ApplicationRecord
   include Installable
+  include Providable
 
   BUNDLED_DIR = Rails.root.join("lib", "plugins")
 

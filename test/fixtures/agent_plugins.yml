@@ -1,0 +1,3 @@
+atlas_claude_code:
+  agent: one
+  plugin: claude_code

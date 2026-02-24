@@ -1,0 +1,22 @@
+claude_code:
+  account: one
+  name: claude_code
+  plugin_type: tool
+  version: "1.0.0"
+  description: "Use Claude Code for complex coding tasks in the workspace"
+  execution: sandbox
+  tools: <%= [{"name" => "claude_code", "description" => "Delegate a coding task to Claude Code", "command" => "claude -p --output-format text", "stdin_param" => "prompt"}].to_json %>
+  permissions: <%= {"network" => true}.to_json %>
+  config_schema: <%= [{"key" => "ANTHROPIC_API_KEY", "type" => "secret", "required" => false}, {"key" => "MODE", "type" => "select", "options" => ["tool", "provider"], "default" => "tool"}, {"key" => "CLAUDE_MODEL", "type" => "string", "required" => false}].to_json %>
+  provider_config: <%= {"entrypoint" => "claude_code.rb", "models" => [{"id" => "claude-sonnet-4-6", "name" => "Claude Sonnet 4.6"}]}.to_json %>
+
+simple_tool:
+  account: one
+  name: simple_tool
+  plugin_type: tool
+  version: "1.0.0"
+  description: "A simple tool plugin without provider capability"
+  execution: sandbox
+  tools: <%= [].to_json %>
+  permissions: <%= {}.to_json %>
+  config_schema: <%= [].to_json %>

@@ -60,6 +60,7 @@ class Agent::PromptBuilder
 
     def plugin_instructions
       sections = agent.plugins.filter_map do |plugin|
+        next if plugin.provider_mode?(agent)
         body = plugin.instructions
         "### #{plugin.name}\n#{body}" if body.present?
       end
