@@ -57,6 +57,7 @@ Rails.application.routes.draw do
       end
     end
     resources :participants, only: %i[create destroy], module: :chats
+    resource :halt, only: :create, module: :chats
   end
 
   root "chats#index"

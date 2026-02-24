@@ -154,7 +154,7 @@
           <% unless composer_enabled %>
             <div class="chat-composer-notice"><%= @agent.name %> is <%= @agent.status %></div>
           <% end %>
-          <%= form_with url: chat_messages_path(@chat), class: "chat-composer-form", data: { controller: "chat-composer voice-composer mention", mention_names_value: (@chat.users.map(&:full_name) + @chat.agents.map(&:name)).uniq.to_json, action: "submit->chat-composer#unlockAudio" } do |form| %>
+          <%= form_with url: chat_messages_path(@chat), class: "chat-composer-form", data: { controller: "chat-composer voice-composer mention", chat_composer_halt_url_value: chat_halt_path(@chat), mention_names_value: (@chat.users.map(&:full_name) + @chat.agents.map(&:name)).uniq.to_json, action: "submit->chat-composer#unlockAudio" } do |form| %>
             <div class="chat-composer-inner">
               <% placeholder = if @agent.present?
                 composer_enabled ? "Message #{@agent.name}..." : "#{@agent.name} is #{@agent.status}"
@@ -185,9 +185,14 @@
                 </button>
               <% end %>
 
-              <button type="submit" class="chat-composer-send" data-chat-composer-target="button">
+              <button type="submit" class="chat-composer-send" data-chat-composer-target="send">
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                   <path d="M3 9L15 3L9 15L8 10L3 9Z" fill="currentColor"/>
+                </svg>
+              </button>
+              <button type="button" class="chat-composer-stop" data-chat-composer-target="stop" data-action="click->chat-composer#halt" style="display:none">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <rect x="4" y="4" width="10" height="10" rx="2" fill="currentColor"/>
                 </svg>
               </button>
             </div>

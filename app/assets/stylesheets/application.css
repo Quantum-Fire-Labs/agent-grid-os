@@ -2444,6 +2444,30 @@ fieldset {
   transform: scale(0.95);
 }
 
+.chat-composer-stop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: var(--danger, #e53e3e);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.chat-composer-stop:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+.chat-composer-stop:active {
+  transform: scale(0.95);
+}
+
 @media (min-width: 768px) {
   .chat-composer-input {
     padding: 0.625rem 0 !important;

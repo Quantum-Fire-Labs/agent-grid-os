@@ -1,7 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["input", "button"]
+  static targets = ["input", "send", "stop"]
+  static values = { haltUrl: String }
 
   connect() {
     this.autoResize()
@@ -15,6 +16,7 @@ export default class extends Controller {
         (m.type === "attributes" && !m.target.closest(".audio-player, .audio-player-fill"))
       )
       if (relevant && this.isNearBottom()) this.scrollToBottom()
+      this.toggleStopButton()
     })
     const messages = document.getElementById("chat-messages")
     if (messages) {
@@ -56,6 +58,33 @@ export default class extends Controller {
     const ctx = new (window.AudioContext || window.webkitAudioContext)()
     ctx.resume()
     window._audioContext = ctx
+  }
+
+  halt() {
+    if (!this.haltUrlValue) return
+
+    // Remove streaming UI immediately so the user sees feedback,
+    // even though the LLM HTTP call is still in-flight server-side.
+    // Turbo silently ignores updates to targets that no longer exist,
+    // so subsequent streaming tokens become no-ops on the client.
+    document.getElementById("typing-indicator")?.remove()
+    document.querySelectorAll("[id^='streaming-message-']").forEach(el => el.remove())
+    this.toggleStopButton()
+
+    const token = document.querySelector('meta[name="csrf-token"]')?.content
+    fetch(this.haltUrlValue, {
+      method: "POST",
+      headers: { "X-CSRF-Token": token, "Accept": "text/html" }
+    })
+  }
+
+  toggleStopButton() {
+    if (!this.hasSendTarget || !this.hasStopTarget) return
+    const typing = document.getElementById("typing-indicator")
+    const streaming = document.querySelector("[id^='streaming-message-']")
+    const active = !!(typing || streaming)
+    this.sendTarget.style.display = active ? "none" : ""
+    this.stopTarget.style.display = active ? "" : "none"
   }
 
   autoResize() {

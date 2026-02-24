@@ -96,9 +96,22 @@ class Agent::Workspace
 
     status = result[:exit_code] == 0 ? "completed" : "failed (exit code #{result[:exit_code]})"
 
+    # Create a synthetic tool-call pair so the LLM sees proper tool protocol.
+    # Without this, the async result has no tool_call_id and gets remapped to
+    # role: "user", causing the LLM to treat it as user input and loop.
+    tool_call_id = "async_#{SecureRandom.hex(4)}"
+
+    chat.messages.create!(
+      role: "assistant",
+      sender: agent,
+      content: nil,
+      tool_calls: [ { id: tool_call_id, type: "function", function: { name: label, arguments: "{}" } } ]
+    )
+
     msg = chat.messages.create!(
-      role: "system",
-      content: "[#{label} #{status}]\n\n#{output}\n\nReview the output and let the user know what happened."
+      role: "tool",
+      content: "[#{label} #{status}]\n\n#{output}",
+      tool_call_id: tool_call_id
     )
 
     Turbo::StreamsChannel.broadcast_append_to(

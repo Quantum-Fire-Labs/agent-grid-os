@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_23_182521) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_23_233000) do
   create_table "accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -108,6 +108,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_23_182521) do
   create_table "chats", force: :cascade do |t|
     t.integer "account_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "halted_at"
     t.string "title"
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_chats_on_account_id"

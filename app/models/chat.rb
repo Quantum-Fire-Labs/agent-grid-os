@@ -50,6 +50,18 @@ class Chat < ApplicationRecord
     @last_message ||= messages.order(created_at: :desc).first
   end
 
+  def halt!
+    update!(halted_at: Time.current)
+    Turbo::StreamsChannel.broadcast_stream_to(self, content: <<~TURBO)
+      <turbo-stream action="remove" targets="[id^='streaming-message-']"><template></template></turbo-stream>
+      <turbo-stream action="remove" target="typing-indicator"><template></template></turbo-stream>
+    TURBO
+  end
+
+  def halted?
+    halted_at.present?
+  end
+
   def enqueue_agent_replies_for(message, tts_enabled: false)
     return unless message.role == "user"
     return unless message.sender.is_a?(User)
@@ -60,6 +72,7 @@ class Chat < ApplicationRecord
   end
 
   def generate_agent_reply(agent:, tts_enabled: false)
+    update!(halted_at: nil)
     brain = Agent::Brain.new(agent, self)
     last_user_message = messages.where(role: "user").order(:created_at).last
     last_user_content = last_user_message&.content

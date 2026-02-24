@@ -17,19 +17,26 @@ class Agent::Brain
     iterations = 0
 
     loop do
+      if chat.reload.halted?
+        return chat.messages.create!(message_sender_attrs(
+          role: "assistant",
+          content: "Stopped."
+        ))
+      end
+
+      if iterations >= MAX_ITERATIONS
+        return chat.messages.create!(message_sender_attrs(
+          role: "assistant",
+          content: "I wasn't able to complete the task within the tool call limit."
+        ))
+      end
+
       response = think(&on_token)
       iterations += 1
 
       if response.tool_calls?
         msg = persist_assistant(response)
         on_message&.call(msg)
-
-        if iterations >= MAX_ITERATIONS
-          return chat.messages.create!(message_sender_attrs(
-            role: "assistant",
-            content: "I wasn't able to complete the task within the tool call limit."
-          ))
-        end
 
         response.tool_calls.each do |tc|
           result = Agent::ToolRegistry.execute(tc.name, tc.parsed_arguments, agent: agent, context: { chat: chat })
@@ -62,10 +69,14 @@ class Agent::Brain
       )
     end
 
+    TOOL_RESULT_WINDOW = 15
+
     def build_messages
       messages = [ { role: "system", content: @system_prompt } ]
+      all_msgs = chat.messages.where(compacted_at: nil).includes(:sender).order(:created_at).to_a
+      window_start = all_msgs.length - TOOL_RESULT_WINDOW
 
-      chat.messages.where(compacted_at: nil).includes(:sender).order(:created_at).each do |msg|
+      all_msgs.each_with_index do |msg, i|
         content = msg.content
         sender_user = (msg.sender if msg.sender.is_a?(User))
         if msg.role == "user" && sender_user.present? && chat.group?
@@ -80,6 +91,14 @@ class Agent::Brain
         else
           role = msg.role
         end
+
+        # Strip bulky tool results outside the recent window.
+        # The assistant tool_calls message stays so the LLM knows what
+        # was called, but the full output is no longer needed.
+        if role == "tool" && i < window_start
+          content = "[result filtered for compacting]"
+        end
+
         entry = { role: role, content: content }
         entry[:tool_calls] = msg.tool_calls if msg.tool_calls.present?
         entry[:tool_call_id] = msg.tool_call_id if msg.tool_call_id.present?
