@@ -57,18 +57,51 @@ class Agents::KeyChainsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to agent_key_chains_url(@agent)
   end
 
+  test "sole member can view keychains" do
+    member = users(:teammate)
+    agent = member.account.agents.create!(name: "Solo")
+    agent.agent_users.create!(user: member)
+
+    sign_in_as member
+    get agent_key_chains_url(agent)
+    assert_response :success
+  end
+
+  test "sole member can add keychain" do
+    member = users(:teammate)
+    agent = member.account.agents.create!(name: "Solo")
+    agent.agent_users.create!(user: member)
+
+    sign_in_as member
+    assert_difference -> { agent.key_chains.count }, 1 do
+      post agent_key_chains_url(agent), params: { key_chain: { name: "MY_KEY", secret: "secret123" } }
+    end
+    assert_redirected_to agent_key_chains_url(agent)
+  end
+
+  test "member with co-users cannot view keychains" do
+    member = users(:teammate)
+    agent = member.account.agents.create!(name: "Shared")
+    agent.agent_users.create!(user: member)
+    agent.agent_users.create!(user: users(:one))
+
+    sign_in_as member
+    get agent_key_chains_url(agent)
+    assert_response :redirect
+  end
+
   test "cannot access other account agents" do
     other_agent = agents(:two)
     get agent_key_chains_url(other_agent)
     assert_response :not_found
   end
 
-  test "non-admin is redirected" do
+  test "member without access cannot reach agent keychains" do
     delete session_url
     member = users(:teammate)
     post session_url, params: { email_address: member.email_address, password: "password" }
 
     get agent_key_chains_url(@agent)
-    assert_response :redirect
+    assert_response :not_found
   end
 end

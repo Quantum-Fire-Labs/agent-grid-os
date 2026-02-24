@@ -1,6 +1,8 @@
 class Agents::KeyChainsController < ApplicationController
-  before_action :require_admin
+  include AgentAccessible
+
   before_action :set_agent
+  before_action :require_agent_admin
   before_action :set_key_chain, only: %i[edit update destroy]
 
   def index
@@ -44,7 +46,7 @@ class Agents::KeyChainsController < ApplicationController
 
   private
     def set_agent
-      @agent = Current.account.agents.find(params[:agent_id])
+      @agent = accessible_agents.find(params[:agent_id])
     end
 
     def set_key_chain

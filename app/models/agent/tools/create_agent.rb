@@ -31,8 +31,19 @@ class Agent::Tools::CreateAgent < Agent::Tools::Base
     attrs = arguments.slice(*ALLOWED_PARAMS)
     new_agent = agent.account.agents.create!(attrs)
 
+    assign_member_users(new_agent)
+
     "Created agent '#{new_agent.name}'."
   rescue ActiveRecord::RecordInvalid => e
     "Error: #{e.message}"
   end
+
+  private
+    def assign_member_users(new_agent)
+      return unless context[:chat]
+
+      context[:chat].users.where(role: :member).each do |user|
+        new_agent.agent_users.create!(user: user)
+      end
+    end
 end

@@ -15,10 +15,16 @@ class Agents::MemoryWipesControllerTest < ActionDispatch::IntegrationTest
   test "create wipes everything" do
     assert @agent.memories.any?
 
+    chat = @agent.account.chats.create!
+    chat.participants.create!(participatable: @agent)
+    chat.messages.create!(role: "user", content: "hello", sender: users(:one))
+
     post agent_memory_wipe_path(@agent), params: { scope: "everything" }
 
     assert_redirected_to agent_path(@agent)
     assert_equal 0, @agent.memories.count
+    assert_equal 0, chat.messages.count
+    assert Chat.exists?(chat.id), "wipe should preserve conversations and only delete messages"
   end
 
   test "create wipes memories since custom cutoff" do
@@ -59,12 +65,12 @@ class Agents::MemoryWipesControllerTest < ActionDispatch::IntegrationTest
     assert_not Chat.exists?(chat.id), "empty chat should be destroyed"
   end
 
-  test "non-admin is redirected" do
+  test "member without access cannot reach agent" do
     sign_out
     sign_in_as users(:teammate)
 
     get new_agent_memory_wipe_path(@agent)
-    assert_response :redirect
+    assert_response :not_found
   end
 
   test "cannot access other account agent" do

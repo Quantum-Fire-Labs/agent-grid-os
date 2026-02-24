@@ -38,12 +38,33 @@ class Agents::FactoryResetsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Be helpful", @agent.instructions
   end
 
-  test "non-admin is redirected" do
+  test "sole member can factory reset their agent" do
+    member = users(:teammate)
+    agent = Current.account.agents.create!(name: "Solo")
+    agent.agent_users.create!(user: member)
+
+    sign_in_as member
+    post agent_factory_reset_path(agent)
+    assert_redirected_to agent_path(agent)
+  end
+
+  test "member with co-users cannot factory reset agent" do
+    member = users(:teammate)
+    agent = Current.account.agents.create!(name: "Shared")
+    agent.agent_users.create!(user: member)
+    agent.agent_users.create!(user: users(:one))
+
+    sign_in_as member
+    post agent_factory_reset_path(agent)
+    assert_response :redirect
+  end
+
+  test "member without access cannot reach agent" do
     sign_out
     sign_in_as users(:teammate)
 
     post agent_factory_reset_path(@agent)
-    assert_response :redirect
+    assert_response :not_found
   end
 
   test "cannot access other account agent" do

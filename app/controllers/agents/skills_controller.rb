@@ -1,6 +1,8 @@
 class Agents::SkillsController < ApplicationController
-  before_action :require_admin
+  include AgentAccessible
+
   before_action :set_agent
+  before_action :require_agent_admin
 
   def index
     @enabled_skills = @agent.skills
@@ -23,6 +25,6 @@ class Agents::SkillsController < ApplicationController
 
   private
     def set_agent
-      @agent = Current.account.agents.find(params[:agent_id])
+      @agent = accessible_agents.find(params[:agent_id])
     end
 end

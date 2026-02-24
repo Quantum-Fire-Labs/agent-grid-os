@@ -19,10 +19,10 @@ class Agents::CustomAppsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".skill-name", text: "Slideshow"
   end
 
-  test "member cannot view agent apps" do
+  test "member without access cannot reach agent apps" do
     sign_in_as(users(:teammate))
     get agent_custom_apps_url(@agent)
-    assert_redirected_to root_path
+    assert_response :not_found
   end
 
   test "scoped to current account" do

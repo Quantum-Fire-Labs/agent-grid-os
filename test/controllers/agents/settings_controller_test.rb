@@ -85,6 +85,44 @@ class Agents::SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_nil @agent.configs.find_by(key: "voice"), "voice config should not have been saved"
   end
 
+  test "sole member can view settings" do
+    member = users(:teammate)
+    agent = Current.account.agents.create!(name: "Solo")
+    agent.agent_users.create!(user: member)
+
+    sign_in_as member
+    get agent_settings_path(agent)
+    assert_response :success
+  end
+
+  test "sole member can update settings" do
+    member = users(:teammate)
+    agent = Current.account.agents.create!(name: "Solo")
+    agent.agent_users.create!(user: member)
+
+    sign_in_as member
+    patch agent_settings_path(agent), params: { agent_settings: { voice: "nova" } }
+    assert_redirected_to agent_settings_path(agent)
+    assert_equal "nova", agent.configs.find_by(key: "voice").value
+  end
+
+  test "member with co-users cannot view settings" do
+    member = users(:teammate)
+    agent = Current.account.agents.create!(name: "Shared")
+    agent.agent_users.create!(user: member)
+    agent.agent_users.create!(user: users(:one))
+
+    sign_in_as member
+    get agent_settings_path(agent)
+    assert_response :redirect
+  end
+
+  test "member without access cannot reach settings" do
+    sign_in_as users(:teammate)
+    get agent_settings_path(@agent)
+    assert_response :not_found
+  end
+
   test "show requires authentication" do
     sign_out
     get agent_settings_path(@agent)

@@ -60,12 +60,12 @@ class Agents::ClonesControllerTest < ActionDispatch::IntegrationTest
     assert_equal @agent.memories.count, clone.memories.count
   end
 
-  test "non-admin is redirected" do
+  test "member without access cannot reach agent" do
     sign_out
     sign_in_as users(:teammate)
 
     get new_agent_clone_path(@agent)
-    assert_response :redirect
+    assert_response :not_found
   end
 
   test "cannot access other account agent" do

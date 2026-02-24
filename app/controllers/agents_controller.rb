@@ -8,8 +8,8 @@ class AgentsController < ApplicationController
     "none" => ""
   }.freeze
 
-  before_action :require_admin, only: %i[new create edit update destroy]
   before_action :set_agent, only: %i[show edit update destroy]
+  before_action :require_agent_admin, only: %i[edit update destroy]
 
   def index
     @agents = accessible_agents
@@ -54,6 +54,7 @@ class AgentsController < ApplicationController
     end
 
     if @agent.save
+      @agent.agent_users.create!(user: Current.user) unless Current.user.admin?
       redirect_to @agent, notice: "Agent created."
     else
       @personas = Persona.all

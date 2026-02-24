@@ -97,6 +97,30 @@ class Agent::Tools::OrchestratorToolsTest < ActiveSupport::TestCase
     assert created.network_mode_allowed?
   end
 
+  test "create_agent auto-assigns member users from chat" do
+    member = users(:teammate)
+    chat = @agent.account.chats.create!
+    chat.participants.create!(participatable: member)
+    chat.participants.create!(participatable: @agent)
+
+    call_tool(Agent::Tools::CreateAgent,
+      { "name" => "MemberBot" }, { chat: chat })
+
+    created = @agent.account.agents.find_by(name: "MemberBot")
+    assert_includes created.users, member
+  end
+
+  test "create_agent does not auto-assign admin users from chat" do
+    admin = users(:one)
+    chat = chats(:one) # has admin user :one
+
+    call_tool(Agent::Tools::CreateAgent,
+      { "name" => "AdminBot" }, { chat: chat })
+
+    created = @agent.account.agents.find_by(name: "AdminBot")
+    assert_not_includes created.users, admin
+  end
+
   # --- update_agent ---
 
   test "update_agent updates fields" do
@@ -154,7 +178,7 @@ class Agent::Tools::OrchestratorToolsTest < ActiveSupport::TestCase
   end
 
   private
-    def call_tool(klass, arguments = {})
-      klass.new(agent: @agent, arguments: arguments).call
+    def call_tool(klass, arguments = {}, context = {})
+      klass.new(agent: @agent, arguments: arguments, context: context).call
     end
 end

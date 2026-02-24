@@ -1,6 +1,8 @@
 class Agents::ClonesController < ApplicationController
-  before_action :require_admin
+  include AgentAccessible
+
   before_action :set_agent
+  before_action :require_agent_admin
 
   def new
   end
@@ -14,6 +16,6 @@ class Agents::ClonesController < ApplicationController
 
   private
     def set_agent
-      @agent = Current.account.agents.find(params[:agent_id])
+      @agent = accessible_agents.find(params[:agent_id])
     end
 end

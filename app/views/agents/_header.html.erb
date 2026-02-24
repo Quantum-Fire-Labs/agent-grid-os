@@ -43,14 +43,14 @@
         <%= button_to "Reboot", agent_awakening_path(@agent), method: :patch, class: "btn btn-ghost btn-sm" %>
         <%= button_to "Sleep", agent_awakening_path(@agent), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% end %>
-      <% if Current.user.admin? %>
+      <% if can_admin_agent?(@agent) %>
         <%= link_to "Edit", edit_agent_path(@agent), class: "btn btn-ghost btn-sm" %>
       <% end %>
     </div>
   </div>
 </div>
 
-<% if Current.user.admin? %>
+<% if can_admin_agent?(@agent) %>
   <% active = local_assigns[:active_tab].to_s %>
   <nav class="agent-profile-tabs">
     <%= link_to agent_path(@agent), class: "agent-profile-tab #{'agent-profile-tab-active' if active == 'details'}", data: { turbo_frame: "_top" } do %>

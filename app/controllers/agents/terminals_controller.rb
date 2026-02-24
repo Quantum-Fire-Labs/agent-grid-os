@@ -1,7 +1,14 @@
 class Agents::TerminalsController < ApplicationController
-  before_action :require_admin
+  include AgentAccessible
+
+  before_action :set_agent
+  before_action :require_agent_admin
 
   def show
-    @agent = Current.account.agents.find(params[:agent_id])
   end
+
+  private
+    def set_agent
+      @agent = accessible_agents.find(params[:agent_id])
+    end
 end

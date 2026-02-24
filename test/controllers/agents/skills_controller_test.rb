@@ -34,12 +34,12 @@ class Agents::SkillsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "non-admin is redirected" do
+  test "member without access cannot reach agent skills" do
     delete session_url
     member = users(:teammate)
     post session_url, params: { email_address: member.email_address, password: "password" }
 
     get agent_skills_url(@agent)
-    assert_response :redirect
+    assert_response :not_found
   end
 end

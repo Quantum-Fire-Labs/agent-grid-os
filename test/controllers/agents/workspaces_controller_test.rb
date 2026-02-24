@@ -28,6 +28,33 @@ class Agents::WorkspacesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "sole member can view workspace" do
+    member = users(:teammate)
+    agent = Current.account.agents.create!(name: "Solo")
+    agent.agent_users.create!(user: member)
+
+    sign_in_as member
+    get agent_workspace_path(agent)
+    assert_response :success
+  end
+
+  test "member with co-users cannot view workspace" do
+    member = users(:teammate)
+    agent = Current.account.agents.create!(name: "Shared")
+    agent.agent_users.create!(user: member)
+    agent.agent_users.create!(user: users(:one))
+
+    sign_in_as member
+    get agent_workspace_path(agent)
+    assert_response :redirect
+  end
+
+  test "member without access cannot reach workspace" do
+    sign_in_as users(:teammate)
+    get agent_workspace_path(@agent)
+    assert_response :not_found
+  end
+
   test "show requires authentication" do
     sign_out
     get agent_workspace_path(@agent)

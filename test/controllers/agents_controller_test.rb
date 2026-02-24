@@ -31,10 +31,10 @@ class AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_agent_path
   end
 
-  test "new requires admin" do
+  test "new is accessible to members" do
     sign_in_as users(:teammate)
     get new_agent_path
-    assert_redirected_to root_path
+    assert_response :success
   end
 
   # create
@@ -95,15 +95,84 @@ class AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='from_persona'][value='the_orchestrator']"
   end
 
-  test "create requires admin" do
+  test "create is accessible to members" do
     sign_in_as users(:teammate)
-    post agents_path, params: { agent: { name: "scout" } }
-    assert_redirected_to root_path
+    assert_difference "Agent.count", 1 do
+      post agents_path, params: { agent: { name: "scout", title: "Scout" } }
+    end
+    assert_redirected_to agent_path(Agent.last)
+  end
+
+  test "create as member auto-assigns the creator" do
+    sign_in_as users(:teammate)
+    post agents_path, params: { agent: { name: "scout", title: "Scout" } }
+
+    agent = Agent.last
+    assert_includes agent.users, users(:teammate)
+  end
+
+  test "create as admin does not auto-assign the creator" do
+    post agents_path, params: { agent: { name: "scout", title: "Scout" } }
+
+    agent = Agent.last
+    assert_not_includes agent.users, users(:one)
   end
 
   test "create requires authentication" do
     sign_out
     post agents_path, params: { agent: { name: "scout" } }
     assert_redirected_to new_session_path
+  end
+
+  # edit/update/destroy — sole member as agent admin
+
+  test "sole member can edit their agent" do
+    member = users(:teammate)
+    agent = Current.account.agents.create!(name: "Solo")
+    agent.agent_users.create!(user: member)
+
+    sign_in_as member
+    get edit_agent_path(agent)
+    assert_response :success
+  end
+
+  test "sole member can update their agent" do
+    member = users(:teammate)
+    agent = Current.account.agents.create!(name: "Solo")
+    agent.agent_users.create!(user: member)
+
+    sign_in_as member
+    patch agent_path(agent), params: { agent: { name: "Renamed" } }
+    assert_redirected_to agent_path(agent)
+    assert_equal "Renamed", agent.reload.name
+  end
+
+  test "sole member can destroy their agent" do
+    member = users(:teammate)
+    agent = Current.account.agents.create!(name: "Solo")
+    agent.agent_users.create!(user: member)
+
+    sign_in_as member
+    assert_difference "Agent.count", -1 do
+      delete agent_path(agent)
+    end
+  end
+
+  test "member with co-users cannot edit agent" do
+    member = users(:teammate)
+    other = users(:one)
+    agent = Current.account.agents.create!(name: "Shared")
+    agent.agent_users.create!(user: member)
+    agent.agent_users.create!(user: other)
+
+    sign_in_as member
+    get edit_agent_path(agent)
+    assert_response :redirect
+  end
+
+  test "member not assigned to agent cannot edit it" do
+    sign_in_as users(:teammate)
+    get edit_agent_path(@agent)
+    assert_response :not_found
   end
 end
