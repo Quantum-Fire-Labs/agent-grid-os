@@ -39,11 +39,6 @@
           <%= form.textarea :instructions, rows: 6, placeholder: "Custom instructions included in every prompt to this agent" %>
         </div>
 
-        <div class="form-group">
-          <%= form.label :network_mode, "Network mode" %>
-          <%= form.select :network_mode, Agent.network_modes.keys, {} %>
-        </div>
-
         <div class="form-actions-inline">
           <%= form.submit "Save", class: "btn btn-primary btn-sm" %>
           <%= link_to "Cancel", agent_path(@agent), class: "btn btn-ghost btn-sm" %>

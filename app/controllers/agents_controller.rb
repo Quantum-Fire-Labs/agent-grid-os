@@ -74,6 +74,6 @@ class AgentsController < ApplicationController
     end
 
     def agent_params
-      params.expect(agent: [ :name, :title, :description, :personality, :instructions, :network_mode ])
+      params.expect(agent: [ :name, :title, :description, :personality, :instructions ])
     end
 end

@@ -13,9 +13,9 @@ class AgentPlugin < ApplicationRecord
       return if plugin.compatible_with_network_mode?(agent.network_mode)
 
       if plugin.requires_full_network?
-        errors.add(:base, "#{plugin.name} requires full network access, but agent network mode is #{agent.network_mode}")
+        errors.add(:base, "#{plugin.name} requires the agent's workspace to have full network access (current: #{agent.network_mode})")
       else
-        errors.add(:base, "#{plugin.name} requires network access incompatible with agent network mode #{agent.network_mode}")
+        errors.add(:base, "#{plugin.name} requires workspace network access incompatible with agent network mode #{agent.network_mode}")
       end
     end
 

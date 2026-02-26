@@ -21,6 +21,16 @@
     <% end %>
 
     <% if @agent.workspace_enabled? %>
+      <%= form_with url: agent_workspace_path(@agent), method: :patch, class: "form-inline workspace-network-form", data: { turbo_frame: "_top" } do |form| %>
+        <div class="form-group">
+          <%= form.label :network_mode, "Workspace network access" %>
+          <div class="form-inline-fields">
+            <%= select_tag "workspace[network_mode]", options_for_select(Agent.network_modes.keys.map { |m| [m.humanize, m] }, @agent.network_mode) %>
+            <%= form.submit "Save", class: "btn btn-primary btn-sm" %>
+          </div>
+        </div>
+      <% end %>
+
       <div class="workspace-explorer" data-controller="workspace-explorer" data-workspace-explorer-agent-id-value="<%= @agent.id %>">
         <div class="workspace-toolbar">
           <div class="workspace-toolbar-actions">

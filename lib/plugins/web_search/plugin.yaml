@@ -18,8 +18,7 @@ tools:
         - query
 
 permissions:
-  network:
-    - html.duckduckgo.com
+  network: false
 
 packages: []
 config: []

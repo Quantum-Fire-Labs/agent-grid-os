@@ -54,7 +54,7 @@
                 <% if plugin.compatible_with_network_mode?(@agent.network_mode) %>
                   <%= button_to "Enable", agent_plugins_path(@agent, plugin_id: plugin.id), method: :post, class: "btn btn-primary btn-sm" %>
                 <% else %>
-                  <span class="text-muted">Requires <%= plugin.requires_full_network? ? "full" : "network" %> access</span>
+                  <span class="text-muted">Requires workspace <%= plugin.requires_full_network? ? "full network" : "network" %> access</span>
                 <% end %>
               </div>
             </div>

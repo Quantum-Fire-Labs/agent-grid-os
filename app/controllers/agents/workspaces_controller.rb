@@ -19,16 +19,21 @@ class Agents::WorkspacesController < ApplicationController
   end
 
   def update
-    workspace_params = params.expect(workspace: :enabled)
-    @agent.update!(workspace_enabled: workspace_params[:enabled] == "1")
-
-    if @agent.workspace_enabled?
-      Agent::Workspace.new(@agent).start
+    if params[:workspace].key?(:network_mode)
+      @agent.update!(network_mode: params[:workspace][:network_mode])
+      redirect_to agent_workspace_path(@agent), notice: "Network mode updated."
     else
-      Agent::Workspace.new(@agent).stop
-    end
+      enabled = params[:workspace][:enabled] == "1"
+      @agent.update!(workspace_enabled: enabled)
 
-    redirect_to agent_workspace_path(@agent), notice: "Workspace #{@agent.workspace_enabled? ? 'enabled' : 'disabled'}."
+      if enabled
+        Agent::Workspace.new(@agent).start
+      else
+        Agent::Workspace.new(@agent).stop
+      end
+
+      redirect_to agent_workspace_path(@agent), notice: "Workspace #{enabled ? 'enabled' : 'disabled'}."
+    end
   end
 
   def create

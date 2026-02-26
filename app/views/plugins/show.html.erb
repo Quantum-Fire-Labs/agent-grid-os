@@ -56,12 +56,12 @@
     <% network = @plugin.permissions["network"] %>
     <% if network.present? && network != false %>
       <div class="agent-detail-section">
-        <h3 class="section-label">Network Requirements</h3>
+        <h3 class="section-label">Workspace Network</h3>
         <p class="section-text">
           <% if network == true %>
-            Full network access required
+            Requires the agent's workspace to have full network access
           <% elsif network.is_a?(Array) %>
-            Domains: <%= network.join(", ") %>
+            Requires workspace network access to: <%= network.join(", ") %>
           <% end %>
         </p>
       </div>
