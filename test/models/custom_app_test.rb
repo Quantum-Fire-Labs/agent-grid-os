@@ -119,7 +119,13 @@ class CustomAppTest < ActiveSupport::TestCase
 
   test "storage_path points to independent storage" do
     app = custom_apps(:slideshow)
-    assert app.storage_path.to_s.start_with?(Rails.root.join("storage", "apps", app.id.to_s).to_s)
+    expected_prefix = if Rails.env.test?
+      Rails.root.join("tmp", "test-storage", "apps", Process.pid.to_s, app.id.to_s)
+    else
+      Rails.root.join("storage", "apps", app.id.to_s)
+    end
+
+    assert app.storage_path.to_s.start_with?(expected_prefix.to_s)
   end
 
   test "files_path is under storage_path" do
