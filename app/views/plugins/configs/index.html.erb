@@ -8,12 +8,13 @@
   <div class="form-card">
     <div class="form-card-header">
       <h1>Configure <%= @plugin.name %></h1>
-      <p class="form-card-subtitle">Global configuration values. Agents can override these with their own values.</p>
+      <p class="form-card-subtitle">Account-level configuration values. Some plugins also support agent-specific values.</p>
     </div>
 
-    <% if @plugin.config_schema.any? %>
+    <% schema_entries = @plugin.config_schema.reject { |schema| schema["scope"] == "agent" } %>
+    <% if schema_entries.any? %>
       <div class="form-body">
-        <% @plugin.config_schema.each do |schema| %>
+        <% schema_entries.each do |schema| %>
           <% existing = @configs.find { |c| c.key == schema["key"] } %>
           <%= form_with url: (existing ? plugin_config_path(@plugin, existing) : plugin_configs_path(@plugin)),
                         method: (existing ? :patch : :post),

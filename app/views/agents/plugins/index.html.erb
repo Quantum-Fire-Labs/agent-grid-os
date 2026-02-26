@@ -26,6 +26,9 @@
               <% end %>
               <div class="skill-card-actions">
                 <% agent_plugin = @agent.agent_plugins.find_by(plugin: plugin) %>
+                <% if plugin.config_schema.any? { |schema| schema["scope"] != "account" } %>
+                  <%= link_to "Configure", agent_plugin_configs_path(@agent, plugin), class: "btn btn-ghost btn-sm" %>
+                <% end %>
                 <%= button_to "Disable", agent_plugin_path(@agent, agent_plugin), method: :delete, class: "btn btn-ghost btn-sm" %>
               </div>
             </div>

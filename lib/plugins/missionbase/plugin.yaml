@@ -1,0 +1,261 @@
+name: missionbase
+type: tool
+version: 2.0.0
+description: "Missionbase MCP-style tools (namespaced for AgentGridOS)"
+execution: platform
+entrypoint: missionbase.rb
+
+tools:
+  - name: missionbase_list_tasks_visible_to_current_user
+    description: "List all tasks visible to the current user from accessible boxes."
+    parameters:
+      type: object
+      properties:
+        status:
+          oneOf:
+            - type: string
+            - type: array
+              items: { type: string }
+        box_id: { type: integer }
+        team_id: { type: integer, description: "Filter to tasks from boxes owned by a specific team" }
+        date: { type: string, description: "YYYY-MM-DD" }
+  - name: missionbase_list_tasks_assigned_to_current_user
+    description: "List tasks assigned to the current user."
+    parameters:
+      type: object
+      properties:
+        status:
+          oneOf:
+            - type: string
+            - type: array
+              items: { type: string }
+        box_id: { type: integer }
+        team_id: { type: integer }
+        date: { type: string, description: "YYYY-MM-DD" }
+        include_overdue: { type: boolean }
+  - name: missionbase_list_current_user_tasks_by_team
+    description: "List tasks for the current user within a specific team."
+    parameters:
+      type: object
+      properties:
+        team_id: { type: integer }
+        status:
+          oneOf:
+            - type: string
+            - type: array
+              items: { type: string }
+        box_id: { type: integer }
+        date: { type: string, description: "YYYY-MM-DD" }
+      required: [team_id]
+  - name: missionbase_list_tasks_by_box
+    description: "List all tasks in a specific box."
+    parameters:
+      type: object
+      properties:
+        box_id: { type: integer }
+        status:
+          oneOf:
+            - type: string
+            - type: array
+              items: { type: string }
+        date: { type: string, description: "YYYY-MM-DD" }
+      required: [box_id]
+  - name: missionbase_list_active_tasks_by_team
+    description: "List all active tasks for a specific team."
+    parameters:
+      type: object
+      properties:
+        team_id: { type: integer }
+        box_id: { type: integer }
+        date: { type: string, description: "YYYY-MM-DD" }
+      required: [team_id]
+  - name: missionbase_create_task
+    description: "Create a new task with optional auto-assignment."
+    parameters:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        box_id: { type: integer }
+        do_on: { type: string, description: "YYYY-MM-DD" }
+        deadline: { type: string, description: "YYYY-MM-DD" }
+        assign_to_current_user: { type: boolean }
+        assign_to_user_id:
+          type: integer
+          description: "Optional. Ignored when assign_to_current_user is true. 0 is treated as omitted."
+      required: [title]
+  - name: missionbase_list_team_boxes
+    description: "List boxes owned by a specific team."
+    parameters:
+      type: object
+      properties:
+        team_id: { type: integer }
+        status: { type: string }
+        include_closed: { type: boolean }
+      required: [team_id]
+  - name: missionbase_create_box
+    description: "Create a new box with proper ownership and permissions."
+    parameters:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        status: { type: string }
+        visibility: { type: string }
+        ownable_type: { type: string, enum: [User, Team] }
+        ownable_id: { type: integer }
+      required: [name]
+  - name: missionbase_update_task
+    description: "Update an existing task."
+    parameters:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        status: { type: string }
+        do_on: { type: string, description: "YYYY-MM-DD" }
+      required: [id]
+  - name: missionbase_assign_user_to_task
+    description: "Assign a user to a task."
+    parameters:
+      type: object
+      properties:
+        task_id: { type: integer }
+        user_id: { type: integer }
+      required: [task_id, user_id]
+  - name: missionbase_unassign_user_from_task
+    description: "Remove a user assignment from a task."
+    parameters:
+      type: object
+      properties:
+        task_id: { type: integer }
+        user_id: { type: integer }
+      required: [task_id, user_id]
+  - name: missionbase_list_conversations
+    description: "List conversations accessible to the current user."
+    parameters:
+      type: object
+      properties:
+        conversation_status:
+          oneOf:
+            - type: string
+            - type: array
+              items: { type: string }
+        box_id: { type: integer }
+  - name: missionbase_get_conversation
+    description: "Get conversation details including recent entries."
+    parameters:
+      type: object
+      properties:
+        feed_id: { type: integer }
+        limit: { type: integer }
+      required: [feed_id]
+  - name: missionbase_update_conversation_status
+    description: "Update the status of a conversation (read, unread, archived, etc.)."
+    parameters:
+      type: object
+      properties:
+        feed_id: { type: integer }
+        status: { type: string, enum: [unread, read, snoozed, archived] }
+      required: [feed_id, status]
+  - name: missionbase_add_comment_to_task
+    description: "Add a comment to a task by task_id. The plugin resolves the task's conversation/feed automatically."
+    parameters:
+      type: object
+      properties:
+        task_id: { type: integer }
+        comment: { type: string }
+      required: [task_id, comment]
+  - name: missionbase_add_comment_to_conversation
+    description: "Add a comment to a conversation by feed_id. For task comments, prefer missionbase_add_comment_to_task."
+    parameters:
+      type: object
+      properties:
+        comment: { type: string }
+        feed_id: { type: integer }
+        task_id: { type: integer }
+        post_id: { type: integer }
+      required: [comment]
+  - name: missionbase_get_task
+    description: "Get details of a specific task by ID."
+    parameters:
+      type: object
+      properties:
+        id: { type: integer }
+        include_entries: { type: boolean }
+        entry_limit: { type: integer }
+      required: [id]
+  - name: missionbase_get_current_user
+    description: "Get information about the currently authenticated Missionbase user."
+    parameters:
+      type: object
+      properties: {}
+  - name: missionbase_list_teams
+    description: "List teams accessible to the current user."
+    parameters:
+      type: object
+      properties:
+        status: { type: string }
+  - name: missionbase_list_team_members
+    description: "List members of a specific team."
+    parameters:
+      type: object
+      properties:
+        team_id: { type: integer }
+        status: { type: string }
+      required: [team_id]
+  - name: missionbase_get_daily_note
+    description: "Get the daily note for a specific date. Defaults to today if omitted."
+    parameters:
+      type: object
+      properties:
+        date: { type: string, description: "YYYY-MM-DD" }
+  - name: missionbase_update_daily_note
+    description: "Update or create a daily note for a specific date."
+    parameters:
+      type: object
+      properties:
+        date: { type: string, description: "YYYY-MM-DD" }
+        content: { type: string }
+      required: [content]
+  - name: missionbase_search_notes
+    description: "Search notes by title/content."
+    parameters:
+      type: object
+      properties:
+        query: { type: string }
+        type: { type: string, enum: [all, box, daily] }
+      required: [query]
+
+permissions:
+  network: true
+
+packages: []
+
+config:
+  - key: MISSIONBASE_API_KEY
+    type: secret
+    required: true
+    scope: agent
+    label: "Missionbase Personal API Key"
+
+instructions: |
+  You have Missionbase tools available. These tools mirror Missionbase MCP semantics, but are namespaced with `missionbase_` to avoid collisions.
+
+  Examples:
+  - `missionbase_get_current_user`
+  - `missionbase_list_teams`
+  - `missionbase_list_tasks_assigned_to_current_user`
+  - `missionbase_create_task`
+  - `missionbase_add_comment_to_task`
+  - `missionbase_add_comment_to_conversation`
+  - `missionbase_get_daily_note`
+
+  Setup requirement:
+  - Agent plugin config: `MISSIONBASE_API_KEY`
+
+  Notes:
+  - The plugin tolerates noisy task creation payloads (e.g. `assign_to_user_id` sent alongside `assign_to_current_user: true`).
+  - Base URL is fixed to `https://dash.missionbase.app`.
+  - For task comments by task ID, use `missionbase_add_comment_to_task`.

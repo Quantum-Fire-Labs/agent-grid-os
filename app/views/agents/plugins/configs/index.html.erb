@@ -1,0 +1,58 @@
+<div class="agent-profile" data-status="<%= @agent.status %>">
+  <%= render "agents/header", active_tab: "plugins" %>
+
+  <div class="agent-profile-body">
+    <div class="breadcrumb">
+      <%= link_to "Agents", agents_path %> <span class="breadcrumb-sep">/</span>
+      <%= link_to @agent.name, agent_path(@agent) %> <span class="breadcrumb-sep">/</span>
+      <%= link_to "Plugins", agent_plugins_path(@agent) %> <span class="breadcrumb-sep">/</span>
+      <span><%= @plugin.name %> configuration</span>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <h1>Configure <%= @plugin.name %> for <%= @agent.name %></h1>
+        <p class="form-card-subtitle">Agent-specific configuration values for this plugin.</p>
+      </div>
+
+      <% schema_entries = @plugin.config_schema.reject { |schema| schema["scope"] == "account" } %>
+      <% if schema_entries.any? %>
+        <div class="form-body">
+          <% schema_entries.each do |schema| %>
+            <% existing = @configs.find { |c| c.key == schema["key"] } %>
+            <% account_default = @account_configs.find { |c| c.key == schema["key"] } %>
+            <%= form_with url: (existing ? agent_plugin_config_path(@agent, @plugin, existing) : agent_plugin_configs_path(@agent, @plugin)),
+                          method: (existing ? :patch : :post),
+                          scope: :plugin_config,
+                          class: "form-group form-inline" do |form| %>
+              <%= form.label :value, schema["label"] || schema["key"] %>
+              <%= form.hidden_field :key, value: schema["key"] %>
+              <div class="form-inline-fields">
+                <% if schema["type"] == "secret" %>
+                  <%= form.password_field :value, value: existing&.value, placeholder: (schema["required"] ? "Required" : "Optional") %>
+                <% elsif schema["type"] == "boolean" %>
+                  <%= form.select :value, options_for_select([["--", ""], ["true", "true"], ["false", "false"]], existing&.value) %>
+                <% elsif schema["type"] == "select" %>
+                  <%= form.select :value, options_for_select((schema["options"] || []).map { |opt| [opt, opt] }, existing&.value || schema["default"]) %>
+                <% else %>
+                  <%= form.text_field :value, value: existing&.value, placeholder: (schema["required"] ? "Required" : "Optional") %>
+                <% end %>
+                <%= form.submit "Save", class: "btn btn-primary btn-sm" %>
+                <% if existing %>
+                  <%= button_to "Remove", agent_plugin_config_path(@agent, @plugin, existing), method: :delete, class: "btn btn-ghost btn-sm" %>
+                <% end %>
+              </div>
+              <% if account_default.present? && existing.blank? %>
+                <p class="form-hint">Account default is set for this key.</p>
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="empty-state">
+          <p>This plugin has no agent-specific configuration options.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
