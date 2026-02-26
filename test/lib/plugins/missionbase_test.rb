@@ -168,6 +168,25 @@ class MissionbaseTest < ActiveSupport::TestCase
     end
   end
 
+  test "update task forwards box_id to tasks update endpoint" do
+    fake_http = FakeHttp.new([ FakeResponse.new("200", '{"task":{"id":123,"title":"Moved task"}}') ])
+
+    with_http_stub(fake_http) do
+      output = Missionbase.new(agent: @agent).call("missionbase_update_task", {
+        "id" => 123,
+        "box_id" => 121
+      })
+
+      assert_includes output, "Successfully updated task"
+      request = fake_http.requests.first
+      assert_equal "/api/v1/tasks/123", request.path
+      assert_equal "PATCH", request.method
+      body = JSON.parse(request.body)
+      assert_equal 121, body["box_id"]
+      assert_equal({ "box_id" => 121 }, body)
+    end
+  end
+
   test "add comment to task posts directly to task comments endpoint" do
     fake_http = FakeHttp.new([
       FakeResponse.new("201", '{"comment":{"id":55,"feed_id":777}}')

@@ -113,7 +113,8 @@ tools:
         id: { type: integer }
         title: { type: string }
         description: { type: string }
-        status: { type: string }
+        status: { type: string, enum: [backlog, todo, in_progress, complete, not_doing] }
+        box_id: { type: integer }
         do_on: { type: string, description: "YYYY-MM-DD" }
       required: [id]
   - name: missionbase_assign_user_to_task

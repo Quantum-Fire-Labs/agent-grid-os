@@ -148,7 +148,7 @@ class Missionbase
 
     def update_task(arguments)
       id = require_arg!(arguments, "id")
-      body = slice(arguments, "title", "description", "status", "do_on")
+      body = slice(arguments, "title", "description", "status", "do_on", "box_id")
       raise ToolArgumentError, "At least one field to update is required" if compact_hash(body).empty?
 
       request_json(:patch, "/api/v1/tasks/#{id}", body: body)
