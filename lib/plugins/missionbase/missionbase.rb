@@ -317,7 +317,7 @@ class Missionbase
         boxes = boxes.reject { |b| b["status"] == "closed" }
       end
       lines = boxes.map do |b|
-        extras = [b['status'], b['visibility']].compact.join(", ")
+        extras = [ b["status"], b["visibility"] ].compact.join(", ")
         extras = " (#{extras})" if extras.present?
         "• [ID: #{b['id']}] #{b['name']}#{extras}"
       end
@@ -328,8 +328,8 @@ class Missionbase
       box = result["box"] || {}
       [
         "Successfully created box: #{box['name']} (ID: #{box['id']})",
-        ("Status: #{box['status']}" if box['status']),
-        ("Visibility: #{box['visibility']}" if box['visibility'])
+        ("Status: #{box['status']}" if box["status"]),
+        ("Visibility: #{box['visibility']}" if box["visibility"])
       ].compact.join("\n")
     end
 
@@ -350,8 +350,8 @@ class Missionbase
 
     def format_task_mutation(result, verb:)
       task = result["task"] || {}
-      title = task['title'] || 'Task'
-      id = task['id']
+      title = task["title"] || "Task"
+      id = task["id"]
       line = "Successfully #{verb} task: #{title}"
       line += " (ID: #{id})" if id
       line
@@ -365,13 +365,13 @@ class Missionbase
       lines << "Title: #{task['title']}"
       lines << "Status: #{task['status']}"
       lines << "Box: #{task.dig('box', 'name') || 'No box'}"
-      lines << "Created by: #{task.dig('created_by', 'name')}" if task['created_by'].is_a?(Hash)
+      lines << "Created by: #{task.dig('created_by', 'name')}" if task["created_by"].is_a?(Hash)
       lines << "Do on: #{task['do_on'] || 'Not scheduled'}"
       lines << "Deadline: #{task['deadline'] || 'No deadline'}"
-      lines << "Created: #{task['created_at']}" if task['created_at']
-      lines << "Updated: #{task['updated_at']}" if task['updated_at']
-      if task['description'].present?
-        desc = task['description'].to_s.gsub(/<[^>]+>/, ' ').gsub(/\s+/, ' ').strip
+      lines << "Created: #{task['created_at']}" if task["created_at"]
+      lines << "Updated: #{task['updated_at']}" if task["updated_at"]
+      if task["description"].present?
+        desc = task["description"].to_s.gsub(/<[^>]+>/, " ").gsub(/\s+/, " ").strip
         lines << "Description: #{desc}" if desc.present?
       end
       assignees = extract_assignee_names(task)
@@ -414,15 +414,15 @@ class Missionbase
       ]
       if entries.any?
         entry_lines = entries.map do |e|
-          who = e.dig('user', 'name') || e['user_name'] || 'Unknown'
-          kind = e['entry_type'] || e['type'] || 'entry'
+          who = e.dig("user", "name") || e["user_name"] || "Unknown"
+          kind = e["entry_type"] || e["type"] || "entry"
           content = extract_entry_text(e)
-          time = e['created_at'] || e['updated_at']
-          [time, who, kind, content].compact.join(' - ')
+          time = e["created_at"] || e["updated_at"]
+          [ time, who, kind, content ].compact.join(" - ")
         end
-        (header + ["", "Recent Entries:"] + entry_lines).join("\n")
+        (header + [ "", "Recent Entries:" ] + entry_lines).join("\n")
       else
-        (header + ["", "Recent Entries: none"]).join("\n")
+        (header + [ "", "Recent Entries: none" ]).join("\n")
       end
     end
 
@@ -445,7 +445,7 @@ class Missionbase
       content = note["content"]
       date = note["date"] || "(unknown date)"
       if content.present?
-        plain = content.to_s.gsub(/<[^>]+>/, ' ').gsub(/\s+/, ' ').strip
+        plain = content.to_s.gsub(/<[^>]+>/, " ").gsub(/\s+/, " ").strip
         "Daily Note for #{date}:\n\n#{plain.presence || '(empty)'}"
       else
         note["message"].presence || "No daily note exists for #{date}"
@@ -494,7 +494,7 @@ class Missionbase
 
     def extract_entry_text(entry)
       text = entry["content"] || entry["body"] || entry.dig("comment", "content")
-      text.to_s.gsub(/<[^>]+>/, ' ').gsub(/\s+/, ' ').strip
+      text.to_s.gsub(/<[^>]+>/, " ").gsub(/\s+/, " ").strip
     end
 
     def normalize_arguments(arguments)
