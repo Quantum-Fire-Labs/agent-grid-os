@@ -6,6 +6,7 @@ class Chat < ApplicationRecord
   belongs_to :account
   has_many :participants, dependent: :destroy
   has_many :messages, dependent: :destroy
+  has_many :scheduled_actions, dependent: :nullify
   has_many :users, through: :participants, source: :participatable, source_type: "User"
   has_many :agents, through: :participants, source: :participatable, source_type: "Agent"
 

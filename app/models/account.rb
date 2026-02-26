@@ -9,6 +9,7 @@ class Account < ApplicationRecord
   has_many :providers, dependent: :destroy
   has_many :key_chains, as: :owner, dependent: :destroy
   has_many :configs, as: :configurable, dependent: :destroy
+  has_many :scheduled_actions, dependent: :destroy
 
   validates :name, presence: true
 end

@@ -8,6 +8,7 @@ class User < ApplicationRecord
   has_many :agents, through: :agent_users
   has_many :custom_app_users, dependent: :destroy
   has_many :custom_apps, through: :custom_app_users
+  has_many :created_scheduled_actions, class_name: "ScheduledAction", foreign_key: :created_by_user_id, dependent: :nullify
 
   enum :role, %w[admin member].index_by(&:itself), default: "member"
 

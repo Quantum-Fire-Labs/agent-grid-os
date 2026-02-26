@@ -7,6 +7,7 @@ one:
   email_address: one@example.com
   password_digest: <%= password_digest %>
   role: admin
+  time_zone: America/New_York
 
 teammate:
   account: one
@@ -15,6 +16,7 @@ teammate:
   email_address: teammate@example.com
   password_digest: <%= password_digest %>
   role: member
+  time_zone: America/Los_Angeles
 
 two:
   account: two

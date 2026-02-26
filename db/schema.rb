@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_24_025358) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_26_090000) do
   create_table "accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -277,6 +277,63 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_025358) do
     t.index ["account_id"], name: "index_providers_on_account_id"
   end
 
+  create_table "scheduled_action_runs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "delivery_message_id"
+    t.text "error"
+    t.datetime "finished_at"
+    t.string "queue_job_id"
+    t.text "result_summary"
+    t.integer "scheduled_action_id", null: false
+    t.datetime "scheduled_for_at", null: false
+    t.datetime "started_at", null: false
+    t.string "status", null: false
+    t.datetime "updated_at", null: false
+    t.index ["delivery_message_id"], name: "index_scheduled_action_runs_on_delivery_message_id"
+    t.index ["scheduled_action_id", "scheduled_for_at"], name: "idx_scheduled_action_runs_unique_occurrence", unique: true
+    t.index ["scheduled_action_id"], name: "index_scheduled_action_runs_on_scheduled_action_id"
+    t.index ["scheduled_for_at"], name: "index_scheduled_action_runs_on_scheduled_for_at"
+    t.index ["status"], name: "index_scheduled_action_runs_on_status"
+    t.check_constraint "status IN ('running','succeeded','failed','canceled','skipped')", name: "scheduled_action_runs_status_check"
+  end
+
+  create_table "scheduled_actions", force: :cascade do |t|
+    t.integer "account_id", null: false
+    t.integer "agent_id", null: false
+    t.datetime "canceled_at"
+    t.integer "chat_id"
+    t.datetime "created_at", null: false
+    t.integer "created_by_user_id"
+    t.integer "created_from_message_id"
+    t.datetime "ends_at"
+    t.text "last_error"
+    t.datetime "last_run_at"
+    t.string "last_run_status"
+    t.datetime "next_run_at"
+    t.datetime "one_time_run_at"
+    t.datetime "paused_at"
+    t.json "payload", default: {}, null: false
+    t.json "recurrence_rule", default: {}, null: false
+    t.string "run_mode", null: false
+    t.string "schedule_kind", null: false
+    t.datetime "starts_at"
+    t.string "status", default: "active", null: false
+    t.string "timezone", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_scheduled_actions_on_account_id"
+    t.index ["agent_id"], name: "index_scheduled_actions_on_agent_id"
+    t.index ["chat_id"], name: "index_scheduled_actions_on_chat_id"
+    t.index ["created_by_user_id"], name: "index_scheduled_actions_on_created_by_user_id"
+    t.index ["created_from_message_id"], name: "index_scheduled_actions_on_created_from_message_id"
+    t.index ["next_run_at"], name: "index_scheduled_actions_on_next_run_at"
+    t.index ["status", "next_run_at"], name: "index_scheduled_actions_on_status_and_next_run_at"
+    t.check_constraint "last_run_status IS NULL OR last_run_status IN ('succeeded','failed')", name: "scheduled_actions_last_run_status_check"
+    t.check_constraint "run_mode IN ('chat_trigger','direct_tool')", name: "scheduled_actions_run_mode_check"
+    t.check_constraint "schedule_kind IN ('once','recurring')", name: "scheduled_actions_schedule_kind_check"
+    t.check_constraint "status IN ('active','paused','canceled','completed')", name: "scheduled_actions_status_check"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -334,6 +391,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_025358) do
   add_foreign_key "plugin_configs", "plugins"
   add_foreign_key "plugins", "accounts"
   add_foreign_key "providers", "accounts"
+  add_foreign_key "scheduled_action_runs", "messages", column: "delivery_message_id"
+  add_foreign_key "scheduled_action_runs", "scheduled_actions"
+  add_foreign_key "scheduled_actions", "accounts"
+  add_foreign_key "scheduled_actions", "agents"
+  add_foreign_key "scheduled_actions", "chats"
+  add_foreign_key "scheduled_actions", "messages", column: "created_from_message_id"
+  add_foreign_key "scheduled_actions", "users", column: "created_by_user_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "skills", "accounts"
   add_foreign_key "users", "accounts"

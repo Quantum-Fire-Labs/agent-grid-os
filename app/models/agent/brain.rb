@@ -39,7 +39,12 @@ class Agent::Brain
         on_message&.call(msg)
 
         response.tool_calls.each do |tc|
-          result = Agent::ToolRegistry.execute(tc.name, tc.parsed_arguments, agent: agent, context: { chat: chat })
+          result = Agent::ToolRegistry.execute(
+            tc.name,
+            tc.parsed_arguments,
+            agent: agent,
+            context: { chat: chat, user_message_record: user_message_record }
+          )
           tool_msg = chat.messages.create!(message_sender_attrs(role: "tool", content: result, tool_call_id: tc.id))
           on_message&.call(tool_msg)
         end

@@ -1,0 +1,40 @@
+one_time_reminder:
+  account: one
+  agent: one
+  chat: one
+  created_by_user: one
+  created_from_message: one
+  title: Follow up
+  status: active
+  run_mode: chat_trigger
+  schedule_kind: once
+  timezone: America/New_York
+  one_time_run_at: <%= 1.hour.from_now.utc %>
+  recurrence_rule: {}
+  payload:
+    message: Check on the deploy status
+  next_run_at: <%= 1.hour.from_now.utc %>
+
+weekly_automation:
+  account: one
+  agent: one
+  chat: one
+  created_by_user: one
+  created_from_message: one
+  title: Daily report
+  status: active
+  run_mode: direct_tool
+  schedule_kind: recurring
+  timezone: UTC
+  recurrence_rule:
+    frequency: weekly
+    interval: 1
+    time_of_day: "09:00"
+    days_of_week:
+      - mon
+      - wed
+  payload:
+    tool_name: list_custom_tools
+    arguments: {}
+    chat_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  next_run_at: <%= 1.day.from_now.utc %>

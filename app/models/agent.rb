@@ -21,6 +21,7 @@ class Agent < ApplicationRecord
   has_many :plugin_configs, as: :configurable, dependent: :destroy
   has_many :key_chains, as: :owner, dependent: :destroy
   has_many :configs, as: :configurable, dependent: :destroy
+  has_many :scheduled_actions, dependent: :destroy
 
   enum :status, %w[ running asleep exiled ].index_by(&:itself), default: "asleep"
   enum :network_mode, %w[ none allowed allowed_plus_skills full ].index_by(&:itself), default: "none", prefix: true

@@ -9,7 +9,12 @@ class Agent::ToolRegistry
     "recall_memory"      => Agent::Tools::RecallMemory,
     "create_skill"       => Agent::Tools::CreateSkill,
     "remove_skill"       => Agent::Tools::RemoveSkill,
-    "list_skills"        => Agent::Tools::ListSkills
+    "list_skills"        => Agent::Tools::ListSkills,
+    "schedule_reminder"  => Agent::Tools::ScheduleReminder,
+    "schedule_automation"=> Agent::Tools::ScheduleAutomation,
+    "list_scheduled_actions" => Agent::Tools::ListScheduledActions,
+    "cancel_scheduled_action" => Agent::Tools::CancelScheduledAction,
+    "update_scheduled_action" => Agent::Tools::UpdateScheduledAction
   }.freeze
 
   DATA_TOOLS = {

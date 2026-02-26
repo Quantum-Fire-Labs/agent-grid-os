@@ -1,0 +1,7 @@
+one:
+  scheduled_action: one_time_reminder
+  scheduled_for_at: <%= 2.days.ago.utc %>
+  started_at: <%= 2.days.ago.utc %>
+  finished_at: <%= 2.days.ago.utc + 10.seconds %>
+  status: succeeded
+  result_summary: Reminder delivered
