@@ -4,6 +4,9 @@ class Chat < ApplicationRecord
   MENTION_TOKEN = /@([A-Za-z0-9_]+)/
 
   belongs_to :account
+
+  scope :active, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
   has_many :participants, dependent: :destroy
   has_many :messages, dependent: :destroy
   has_many :scheduled_actions, dependent: :nullify
@@ -61,6 +64,18 @@ class Chat < ApplicationRecord
 
   def halted?
     halted_at.present?
+  end
+
+  def archive!
+    update!(archived_at: Time.current)
+  end
+
+  def unarchive!
+    update!(archived_at: nil)
+  end
+
+  def archived?
+    archived_at.present?
   end
 
   def enqueue_agent_replies_for(message, tts_enabled: false)

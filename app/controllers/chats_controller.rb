@@ -2,7 +2,7 @@ class ChatsController < ApplicationController
   rate_limit to: 10, within: 1.minute, only: :create, with: -> { redirect_to chats_path, alert: "Too many requests. Try again later." }
 
   before_action :set_chats
-  before_action :set_chat, only: :show
+  before_action :set_chat, only: %i[show destroy]
 
   def index
     @chat ||= @chats.first
@@ -24,12 +24,22 @@ class ChatsController < ApplicationController
     redirect_to chat_path(chat)
   end
 
+  def destroy
+    @chat.destroy!
+    redirect_to chats_path
+  end
+
   private
     def set_chats
+      scope = params[:archived].present? ? :archived : :active
+
       @chats = Current.user.chats
+        .public_send(scope)
         .includes(:messages)
         .preload(participants: :participatable)
         .order(updated_at: :desc)
+
+      @viewing_archived = scope == :archived
     end
 
     def set_chat

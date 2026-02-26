@@ -7,9 +7,16 @@
   <div class="chat-hub-sidebar" data-chat-hub-target="sidebar">
     <div class="chat-hub-sidebar-header">
       <h2 class="chat-hub-title">Messages</h2>
-      <% if Current.user.admin? %>
-        <%= button_to "New Group", chats_path, method: :post, class: "btn btn-ghost btn-xs" %>
-      <% end %>
+      <div class="chat-hub-header-actions">
+        <% if @viewing_archived %>
+          <%= link_to "Back to chats", chats_path, class: "btn btn-ghost btn-xs" %>
+        <% else %>
+          <%= link_to "Archived", chats_path(archived: 1), class: "btn btn-ghost btn-xs" %>
+          <% if Current.user.admin? %>
+            <%= button_to "New Group", chats_path, method: :post, class: "btn btn-ghost btn-xs" %>
+          <% end %>
+        <% end %>
+      </div>
     </div>
 
     <div class="chat-hub-search">
@@ -19,38 +26,55 @@
     <div class="chat-hub-conversations" data-chat-hub-target="list">
       <% if @chats.any? %>
         <% @chats.each do |chat| %>
-          <%= link_to chat_path(chat),
-                class: "chat-hub-convo #{"chat-hub-convo-active" if @chat == chat}",
-                data: {
-                  chat_hub_target: "chat",
-                  name: chat.display_name.downcase,
-                  action: "click->chat-hub#selectChat"
-                } do %>
-            <div class="chat-hub-convo-avatar">
-              <div class="chat-agent-indicator">
-                <span class="chat-agent-dot"></span>
+          <div class="chat-hub-convo-wrapper" data-controller="chat-menu">
+            <%= link_to chat_path(chat),
+                  class: "chat-hub-convo #{"chat-hub-convo-active" if @chat == chat}",
+                  data: {
+                    chat_hub_target: "chat",
+                    name: chat.display_name.downcase,
+                    action: "click->chat-hub#selectChat"
+                  } do %>
+              <div class="chat-hub-convo-avatar">
+                <div class="chat-agent-indicator">
+                  <span class="chat-agent-dot"></span>
+                </div>
               </div>
-            </div>
-            <% last = chat.last_message %>
-            <div class="chat-hub-convo-body">
-              <div class="chat-hub-convo-top">
-                <span class="chat-hub-convo-name"><%= chat.display_name(viewer: Current.user) %><% if chat.direct? && chat.agent&.title.present? %> <span class="chat-hub-convo-title">(<%= chat.agent.title %>)</span><% end %></span>
+              <% last = chat.last_message %>
+              <div class="chat-hub-convo-body">
+                <div class="chat-hub-convo-top">
+                  <span class="chat-hub-convo-name"><%= chat.display_name(viewer: Current.user) %><% if chat.direct? && chat.agent&.title.present? %> <span class="chat-hub-convo-title">(<%= chat.agent.title %>)</span><% end %></span>
+                  <% if last %>
+                    <span class="chat-hub-convo-time"><%= time_ago_in_words(last.created_at.in_time_zone(Current.user&.time_zone)) %></span>
+                  <% end %>
+                </div>
                 <% if last %>
-                  <span class="chat-hub-convo-time"><%= time_ago_in_words(last.created_at.in_time_zone(Current.user&.time_zone)) %></span>
+                  <span class="chat-hub-convo-preview"><%= truncate(last.content || "", length: 60) %></span>
                 <% end %>
               </div>
-              <% if last %>
-                <span class="chat-hub-convo-preview"><%= truncate(last.content || "", length: 60) %></span>
+              <% if chat.group? %>
+                <span class="chat-hub-convo-badge">group</span>
               <% end %>
-            </div>
-            <% if chat.group? %>
-              <span class="chat-hub-convo-badge">group</span>
             <% end %>
-          <% end %>
+            <button type="button" class="chat-hub-convo-menu-btn" data-action="click->chat-menu#toggle" title="Chat options">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="3" r="1.25" fill="currentColor"/>
+                <circle cx="8" cy="8" r="1.25" fill="currentColor"/>
+                <circle cx="8" cy="13" r="1.25" fill="currentColor"/>
+              </svg>
+            </button>
+            <div class="chat-hub-convo-menu" data-chat-menu-target="menu">
+              <% if chat.archived? %>
+                <%= button_to "Restore", chat_archive_path(chat), method: :delete, class: "chat-hub-convo-menu-item" %>
+              <% else %>
+                <%= button_to "Archive", chat_archive_path(chat), method: :post, class: "chat-hub-convo-menu-item" %>
+              <% end %>
+              <%= button_to "Delete", chat_path(chat), method: :delete, class: "chat-hub-convo-menu-item chat-hub-convo-menu-item-danger", data: { turbo_confirm: "Delete this chat permanently?" } %>
+            </div>
+          </div>
         <% end %>
       <% else %>
         <div class="chat-hub-empty-sidebar">
-          <p>No chats yet</p>
+          <p><%= @viewing_archived ? "No archived chats" : "No chats yet" %></p>
         </div>
       <% end %>
     </div>

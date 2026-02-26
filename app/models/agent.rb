@@ -68,7 +68,7 @@ class Agent < ApplicationRecord
   end
 
   def find_or_create_direct_chat(user)
-    existing = account.chats
+    existing = account.chats.active
       .joins(:participants)
       .group("chats.id")
       .having("COUNT(*) = 2")

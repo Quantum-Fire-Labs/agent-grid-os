@@ -3279,6 +3279,93 @@ fieldset {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
+/* ── Header actions ── */
+
+.chat-hub-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ── Conversation wrapper & menu ── */
+
+.chat-hub-convo-wrapper {
+  position: relative;
+}
+
+.chat-hub-convo-menu-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, background 0.12s ease;
+  z-index: 2;
+}
+
+.chat-hub-convo-wrapper:hover .chat-hub-convo-menu-btn {
+  opacity: 1;
+}
+
+.chat-hub-convo-menu-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.chat-hub-convo-menu {
+  display: none;
+  position: absolute;
+  right: 0.5rem;
+  top: 100%;
+  z-index: 10;
+  min-width: 120px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.25rem;
+  flex-direction: column;
+}
+
+.chat-hub-convo-menu-open {
+  display: flex;
+}
+
+.chat-hub-convo-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  text-align: left;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.chat-hub-convo-menu-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.chat-hub-convo-menu-item-danger {
+  color: var(--danger, #ef4444);
+}
+
+.chat-hub-convo-menu-item-danger:hover {
+  background: color-mix(in srgb, var(--danger, #ef4444) 10%, transparent);
+}
+
 /* ── Chat panel ── */
 
 .chat-hub-panel {

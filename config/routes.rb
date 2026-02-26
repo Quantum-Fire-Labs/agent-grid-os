@@ -52,7 +52,7 @@ Rails.application.routes.draw do
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  resources :chats, only: %i[index show create] do
+  resources :chats, only: %i[index show create destroy] do
     resources :messages, only: %i[index create destroy], module: :chats do
       resource :speech, only: :create, module: :messages do
         post :regenerate, on: :member
@@ -60,6 +60,7 @@ Rails.application.routes.draw do
     end
     resources :participants, only: %i[create destroy], module: :chats
     resource :halt, only: :create, module: :chats
+    resource :archive, only: %i[create destroy], module: :chats
   end
 
   root "chats#index"
