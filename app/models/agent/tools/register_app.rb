@@ -51,6 +51,8 @@ class Agent::Tools::RegisterApp < Agent::Tools::Base
     end
 
     if custom_app.save
+      write_agent_tools_template(custom_app) if is_new
+
       if is_new
         "Registered app '#{slug}'. Your workspace is restarting — the app directory is mounted at apps/#{slug}/. Write your HTML/CSS/JS files there. Users can access it at /apps/#{custom_app.id}."
       else
@@ -60,4 +62,32 @@ class Agent::Tools::RegisterApp < Agent::Tools::Base
       "Error: #{custom_app.errors.full_messages.join(", ")}"
     end
   end
+
+  private
+    def write_agent_tools_template(custom_app)
+      path = custom_app.agent_tools_manifest_path
+      return if path.exist?
+
+      File.write(path, agent_tools_template)
+    end
+
+    def agent_tools_template
+      <<~YAML
+        version: 1
+        tools:
+          - name: add_item
+            description: Add an item to your app data
+            parameters:
+              type: object
+              properties:
+                title:
+                  type: string
+              required: [title]
+            behavior:
+              kind: create
+              table: items
+              data:
+                title: { arg: title }
+      YAML
+    end
 end

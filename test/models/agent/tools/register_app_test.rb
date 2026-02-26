@@ -122,4 +122,22 @@ class Agent::Tools::RegisterAppTest < ActiveSupport::TestCase
   ensure
     FileUtils.rm_rf(app.storage_path) if app
   end
+
+  test "creates starter agent_tools manifest on registration" do
+    Agent::Tools::RegisterApp.new(
+      agent: @agent,
+      arguments: { "slug" => "tools-template-test", "description" => "Test" }
+    ).call
+
+    app = @agent.custom_apps.find_by(slug: "tools-template-test")
+    assert app.agent_tools_manifest_path.exist?
+
+    content = app.agent_tools_manifest_path.read
+    assert_match /version: 1/, content
+    assert_match /tools:/, content
+    assert_match /name: add_item/, content
+    assert_match /behavior:/, content
+  ensure
+    FileUtils.rm_rf(app.storage_path) if app
+  end
 end

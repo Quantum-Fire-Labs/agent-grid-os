@@ -141,6 +141,44 @@ class Agent::PromptBuilder
         - `await AgentGridOS.kv.list(namespace)` — returns `[{key, value}, ...]`
         - `await AgentGridOS.kv.delete(namespace, key)`
 
+        ### App-specific agent tools (`agent_tools.yml`)
+        If you want the agent to have domain-specific tools for this app, create `apps/{slug}/agent_tools.yml`.
+
+        - The file defines declarative tools for the app (no custom code execution)
+        - Each tool becomes a callable tool named `app_<slug>_<name>` (slug hyphens become underscores)
+        - Use this to expose domain actions like `add_task`, `publish_slide`, `archive_note`
+
+        Minimal example:
+
+        ```yaml
+        version: 1
+        tools:
+          - name: add_task
+            description: Add a task to the tasks table
+            parameters:
+              type: object
+              properties:
+                title:
+                  type: string
+              required: [title]
+            behavior:
+              kind: create
+              table: tasks
+              data:
+                title: { arg: title }
+                done: 0
+        ```
+
+        Supported `behavior.kind` values:
+        - `inspect`, `find`, `fetch`, `create`, `change`, `remove`, `save`, `workflow`
+        - `workflow` runs multiple steps atomically
+
+        Tips for authoring app tools:
+        - Keep tool names domain-specific and action-oriented (`publish_slide`, not `update_row`)
+        - Start with a small set of high-value tools users will ask for often
+        - Match parameter names/types exactly to what the tool should accept
+        - Prefer app-specific tools over generic database assumptions when operating on app data
+
         ### Tips
         - Use inline `<script>` and `<style>` tags for simple apps, or reference separate files via relative paths
         - The CSRF token is handled automatically by the SDK
