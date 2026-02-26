@@ -11,7 +11,7 @@ class ScheduledActionDispatchJobTest < ActiveSupport::TestCase
   test "dispatches reminder and enqueues agent reply" do
     action = scheduled_actions(:one_time_reminder)
     due_time = 5.minutes.ago
-    action.update!(one_time_run_at: due_time, next_run_at: due_time)
+    action.update!(chat: chats(:one), one_time_run_at: due_time, next_run_at: due_time)
 
     assert_difference -> { chats(:one).messages.count }, 1 do
       assert_enqueued_with(job: Agent::ReplyJob) do

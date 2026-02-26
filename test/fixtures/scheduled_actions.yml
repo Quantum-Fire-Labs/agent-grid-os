@@ -1,9 +1,7 @@
 one_time_reminder:
   account: one
   agent: one
-  chat: one
   created_by_user: one
-  created_from_message: one
   title: Follow up
   status: active
   run_mode: chat_trigger
@@ -18,9 +16,7 @@ one_time_reminder:
 weekly_automation:
   account: one
   agent: one
-  chat: one
   created_by_user: one
-  created_from_message: one
   title: Daily report
   status: active
   run_mode: direct_tool
@@ -36,5 +32,4 @@ weekly_automation:
   payload:
     tool_name: list_custom_tools
     arguments: {}
-    chat_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
   next_run_at: <%= 1.day.from_now.utc %>

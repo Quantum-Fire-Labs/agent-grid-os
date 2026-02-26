@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_26_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_26_100000) do
   create_table "accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -391,13 +391,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_090000) do
   add_foreign_key "plugin_configs", "plugins"
   add_foreign_key "plugins", "accounts"
   add_foreign_key "providers", "accounts"
-  add_foreign_key "scheduled_action_runs", "messages", column: "delivery_message_id"
+  add_foreign_key "scheduled_action_runs", "messages", column: "delivery_message_id", on_delete: :nullify
   add_foreign_key "scheduled_action_runs", "scheduled_actions"
   add_foreign_key "scheduled_actions", "accounts"
   add_foreign_key "scheduled_actions", "agents"
-  add_foreign_key "scheduled_actions", "chats"
-  add_foreign_key "scheduled_actions", "messages", column: "created_from_message_id"
-  add_foreign_key "scheduled_actions", "users", column: "created_by_user_id"
+  add_foreign_key "scheduled_actions", "chats", on_delete: :nullify
+  add_foreign_key "scheduled_actions", "messages", column: "created_from_message_id", on_delete: :nullify
+  add_foreign_key "scheduled_actions", "users", column: "created_by_user_id", on_delete: :nullify
   add_foreign_key "sessions", "users"
   add_foreign_key "skills", "accounts"
   add_foreign_key "users", "accounts"

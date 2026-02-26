@@ -15,8 +15,10 @@ module Agent::Resettable
     transaction do
       wipe_all_memory
       chats.destroy_all
-      custom_apps.destroy_all
     end
+
+    destroy_custom_apps_for_factory_reset
+
     reset_workspace if workspace_enabled?
   end
 
@@ -42,5 +44,22 @@ module Agent::Resettable
       FileUtils.rm_rf(workspace.path)
       FileUtils.rm_rf(workspace.home_path)
       workspace.start
+    end
+
+    def destroy_custom_apps_for_factory_reset
+      apps = custom_apps.to_a
+      return if apps.empty?
+
+      app_ids = apps.map(&:id)
+      storage_paths = apps.map { |app| app.storage_path.to_s }
+
+      CustomAppAgentAccess.where(custom_app_id: app_ids).delete_all
+      CustomAppUser.where(custom_app_id: app_ids).delete_all
+      ActiveStorage::Attachment.where(record_type: "CustomApp", record_id: app_ids).delete_all
+      CustomApp.where(id: app_ids).delete_all
+
+      storage_paths.each do |path|
+        CleanupAppStorageJob.perform_later(path)
+      end
     end
 end
