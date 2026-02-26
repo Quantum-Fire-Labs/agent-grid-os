@@ -1,12 +1,12 @@
 require "test_helper"
 
 class Agent::PromptBuilderTest < ActiveSupport::TestCase
-  test "includes data tools instructions for agent with own apps" do
+  test "includes app tools instructions for agent with own apps" do
     agent = agents(:one)
     prompt = Agent::PromptBuilder.new(agent).system_prompt
 
-    assert_match /App data tools/, prompt
-    assert_match /list_app_tables/, prompt
+    assert_match /App tools/, prompt
+    assert_match /app_<slug>_<action>/, prompt
   end
 
   test "includes granted apps section for agent with granted access" do
@@ -15,7 +15,7 @@ class Agent::PromptBuilderTest < ActiveSupport::TestCase
 
     assert_match /Apps you have data access to/, prompt
     assert_match /slideshow/, prompt
-    assert_match /App data tools/, prompt
+    assert_match /App tools/, prompt
   end
 
   test "granted apps section only lists published apps" do
@@ -51,6 +51,6 @@ class Agent::PromptBuilderTest < ActiveSupport::TestCase
     prompt = Agent::PromptBuilder.new(agent).system_prompt
 
     assert_no_match(/## Apps/, prompt)
-    assert_no_match(/App data tools/, prompt)
+    assert_no_match(/App tools/, prompt)
   end
 end

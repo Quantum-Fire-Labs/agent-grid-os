@@ -89,7 +89,7 @@ class Agent::PromptBuilder
         parts << apps_instructions
       end
 
-      parts << data_tools_instructions if agent.custom_apps.any? || agent.granted_apps.any?
+      parts << app_tools_instructions if agent.custom_apps.any? || agent.granted_apps.any?
 
       apps = agent.custom_apps.order(:slug)
       if apps.any?
@@ -150,17 +150,12 @@ class Agent::PromptBuilder
       INSTRUCTIONS
     end
 
-    def data_tools_instructions
+    def app_tools_instructions
       <<~INSTRUCTIONS.strip
-        ### App data tools
-        You can read and write app data directly during chat:
-        - `list_app_tables` — list all tables in an app's database
-        - `query_app_data` — query rows from a table (supports `where`, `limit`, `offset`)
-        - `insert_app_data` — insert a row into a table
-        - `update_app_data` — update a row by ID
-        - `delete_app_data` — delete a row by ID
-
-        All data tools take an `app` parameter (the app slug) to identify which app's database to use.
+        ### App tools
+        Apps can expose their own tools for domain-specific actions and data operations.
+        Tool names are namespaced by app slug and look like `app_<slug>_<action>` (hyphens become underscores in the slug part).
+        Prefer these app-specific tools over generic database-style operations.
       INSTRUCTIONS
     end
 

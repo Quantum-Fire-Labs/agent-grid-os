@@ -17,13 +17,7 @@ class Agent::ToolRegistry
     "update_scheduled_action" => Agent::Tools::UpdateScheduledAction
   }.freeze
 
-  DATA_TOOLS = {
-    "list_app_tables"    => Agent::Tools::ListAppTables,
-    "query_app_data"     => Agent::Tools::QueryAppData,
-    "insert_app_data"    => Agent::Tools::InsertAppData,
-    "update_app_data"    => Agent::Tools::UpdateAppData,
-    "delete_app_data"    => Agent::Tools::DeleteAppData
-  }.freeze
+  DATA_TOOLS = {}.freeze
 
   WORKSPACE_TOOLS = {
     "exec"               => Agent::Tools::Exec,
@@ -45,7 +39,6 @@ class Agent::ToolRegistry
 
   def self.definitions(agent:)
     tools = TOOLS.values
-    tools += DATA_TOOLS.values if agent.accessible_apps.any?
     tools += ORCHESTRATOR_TOOLS.values if agent.orchestrator?
     if agent.workspace_enabled?
       tools += WORKSPACE_TOOLS.values
@@ -53,6 +46,7 @@ class Agent::ToolRegistry
     end
 
     defs = tools.map(&:definition)
+    defs += agent.accessible_app_tool_definitions
 
     agent.plugins.tool.each do |plugin|
       defs += plugin.tool_definitions
@@ -71,6 +65,10 @@ class Agent::ToolRegistry
       return output.truncate(12_000, omission: "\n\n[Truncated]")
     end
 
+    if name.start_with?("app_")
+      return execute_app_tool(name, arguments, agent: agent)
+    end
+
     # Plugin tool dispatch
     plugin = agent.plugins.tool.detect { |p| p.tools.any? { |t| t["name"] == name } }
     if plugin
@@ -84,6 +82,16 @@ class Agent::ToolRegistry
   rescue => e
     Rails.logger.error("Tool #{name} failed: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
     "Tool error: #{e.message}"
+  end
+
+  def self.execute_app_tool(name, arguments, agent:)
+    app = agent.accessible_apps.to_a.find { |candidate| name.start_with?(candidate.agent_tool_prefix) }
+    return "Unknown tool: #{name}" unless app
+
+    action = name.delete_prefix(app.agent_tool_prefix)
+    return "Unknown tool: #{name}" if action.blank?
+
+    app.call_agent_tool(action, arguments: arguments, agent: agent)
   end
 
   def self.execute_plugin_tool(plugin, name, arguments, agent:, context: {})

@@ -63,6 +63,10 @@ class Agent < ApplicationRecord
       .or(CustomApp.where(id: CustomAppAgentAccess.where(agent_id: id).select(:custom_app_id)))
   end
 
+  def accessible_app_tool_definitions
+    accessible_apps.includes(:agent).flat_map(&:agent_tool_definitions)
+  end
+
   def find_or_create_direct_chat(user)
     existing = account.chats
       .joins(:participants)

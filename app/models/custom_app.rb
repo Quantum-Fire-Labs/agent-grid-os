@@ -1,6 +1,7 @@
 class CustomApp < ApplicationRecord
   include Servable
   include Storable
+  include Toolable
 
   belongs_to :agent
   belongs_to :account

@@ -4,215 +4,280 @@ class Agent::Tools::AppDataToolsTest < ActiveSupport::TestCase
   setup do
     @agent = agents(:one)
     @app = custom_apps(:draft_app)
-    @table = "t_#{SecureRandom.hex(6)}"
+    @granted_agent = agents(:three)
+    @table = "t_#{SecureRandom.hex(4)}"
+    @written_apps = []
+
     @app.create_table(@table, [
       { "name" => "title", "type" => "TEXT" },
       { "name" => "done", "type" => "INTEGER" }
     ])
-    @app.insert_row(@table, { "title" => "Buy milk", "done" => 0 })
-    @app.insert_row(@table, { "title" => "Write tests", "done" => 1 })
   end
 
-  # --- list_app_tables ---
+  teardown do
+    [ @app, custom_apps(:slideshow) ].uniq.compact.each do |app|
+      begin
+        app.drop_table(@table) if @table
+      rescue
+      end
+    end
 
-  test "list_app_tables returns table names" do
-    result = call_tool(Agent::Tools::ListAppTables, "app" => "draft-app")
-
-    assert_match /Tables in 'draft-app'/, result
-    assert_match @table, result
-  end
-
-  test "list_app_tables with unknown app" do
-    result = call_tool(Agent::Tools::ListAppTables, "app" => "nonexistent")
-
-    assert_match /Error.*no app named 'nonexistent'/, result
-  end
-
-  # --- query_app_data ---
-
-  test "query_app_data returns all rows" do
-    result = call_tool(Agent::Tools::QueryAppData, "app" => "draft-app", "table" => @table)
-
-    assert_match /2 row/, result
-    assert_match /Buy milk/, result
-    assert_match /Write tests/, result
-  end
-
-  test "query_app_data with where filter" do
-    result = call_tool(Agent::Tools::QueryAppData,
-      "app" => "draft-app", "table" => @table, "where" => { "done" => 1 })
-
-    assert_match /1 row/, result
-    assert_match /Write tests/, result
-    assert_no_match(/Buy milk/, result)
-  end
-
-  test "query_app_data with limit" do
-    result = call_tool(Agent::Tools::QueryAppData,
-      "app" => "draft-app", "table" => @table, "limit" => 1)
-
-    assert_match /1 row/, result
-  end
-
-  test "query_app_data with no results" do
-    result = call_tool(Agent::Tools::QueryAppData,
-      "app" => "draft-app", "table" => @table, "where" => { "title" => "nope" })
-
-    assert_match /No rows found/, result
-  end
-
-  test "query_app_data with unknown app" do
-    result = call_tool(Agent::Tools::QueryAppData, "app" => "nope", "table" => @table)
-
-    assert_match /Error.*no app named/, result
-  end
-
-  # --- insert_app_data ---
-
-  test "insert_app_data adds a row" do
-    result = call_tool(Agent::Tools::InsertAppData,
-      "app" => "draft-app", "table" => @table, "data" => { "title" => "New task", "done" => 0 })
-
-    assert_match /Inserted row with id \d+/, result
-    assert_includes @app.query(@table).map { |r| r["title"] }, "New task"
-  end
-
-  test "insert_app_data with unknown app" do
-    result = call_tool(Agent::Tools::InsertAppData,
-      "app" => "nope", "table" => @table, "data" => { "title" => "x" })
-
-    assert_match /Error.*no app named/, result
-  end
-
-  # --- update_app_data ---
-
-  test "update_app_data modifies a row" do
-    row_id = @app.query(@table, where: { "title" => "Buy milk" }).first["id"]
-
-    result = call_tool(Agent::Tools::UpdateAppData,
-      "app" => "draft-app", "table" => @table, "row_id" => row_id, "data" => { "done" => 1 })
-
-    assert_match /Updated 1 row/, result
-    assert_equal 1, @app.get_row(@table, row_id)["done"]
-  end
-
-  test "update_app_data with nonexistent row" do
-    result = call_tool(Agent::Tools::UpdateAppData,
-      "app" => "draft-app", "table" => @table, "row_id" => 99999, "data" => { "done" => 1 })
-
-    assert_match /No row with id 99999/, result
-  end
-
-  test "update_app_data with unknown app" do
-    result = call_tool(Agent::Tools::UpdateAppData,
-      "app" => "nope", "table" => @table, "row_id" => 1, "data" => { "done" => 1 })
-
-    assert_match /Error.*no app named/, result
-  end
-
-  # --- delete_app_data ---
-
-  test "delete_app_data removes a row" do
-    row_id = @app.query(@table, where: { "title" => "Buy milk" }).first["id"]
-
-    result = call_tool(Agent::Tools::DeleteAppData,
-      "app" => "draft-app", "table" => @table, "row_id" => row_id)
-
-    assert_match /Deleted row #{row_id}/, result
-    assert_nil @app.get_row(@table, row_id)
-  end
-
-  test "delete_app_data with nonexistent row" do
-    result = call_tool(Agent::Tools::DeleteAppData,
-      "app" => "draft-app", "table" => @table, "row_id" => 99999)
-
-    assert_match /No row with id 99999/, result
-  end
-
-  test "delete_app_data with unknown app" do
-    result = call_tool(Agent::Tools::DeleteAppData,
-      "app" => "nope", "table" => @table, "row_id" => 1)
-
-    assert_match /Error.*no app named/, result
-  end
-
-  # --- cross-agent granted access ---
-
-  test "granted agent can list tables" do
-    granted_agent = agents(:three) # has granted access to slideshow via fixture
-    app = custom_apps(:slideshow)
-    table = "t_#{SecureRandom.hex(6)}"
-    app.create_table(table, [ { "name" => "col", "type" => "TEXT" } ])
-
-    result = Agent::Tools::ListAppTables.new(agent: granted_agent, arguments: { "app" => "slideshow" }).call
-
-    assert_match table, result
-  ensure
-    app.drop_table(table) if table
-  end
-
-  test "granted agent can query app data" do
-    granted_agent = agents(:three)
-    app = custom_apps(:slideshow)
-    table = "t_#{SecureRandom.hex(6)}"
-    app.create_table(table, [ { "name" => "val", "type" => "TEXT" } ])
-    app.insert_row(table, { "val" => "hello" })
-
-    result = Agent::Tools::QueryAppData.new(
-      agent: granted_agent, arguments: { "app" => "slideshow", "table" => table }
-    ).call
-
-    assert_match /1 row/, result
-    assert_match /hello/, result
-  ensure
-    app.drop_table(table) if table
-  end
-
-  test "granted agent can insert app data" do
-    granted_agent = agents(:three)
-    app = custom_apps(:slideshow)
-    table = "t_#{SecureRandom.hex(6)}"
-    app.create_table(table, [ { "name" => "val", "type" => "TEXT" } ])
-
-    result = Agent::Tools::InsertAppData.new(
-      agent: granted_agent, arguments: { "app" => "slideshow", "table" => table, "data" => { "val" => "inserted" } }
-    ).call
-
-    assert_match /Inserted row/, result
-    assert_includes app.query(table).map { |r| r["val"] }, "inserted"
-  ensure
-    app.drop_table(table) if table
-  end
-
-  test "non-granted agent cannot access app" do
-    non_granted_agent = agents(:three)
-    result = Agent::Tools::ListAppTables.new(
-      agent: non_granted_agent, arguments: { "app" => "draft-app" }
-    ).call
-
-    assert_match /Error.*no app named 'draft-app'/, result
-  end
-
-  # --- tool definitions ---
-
-  test "all tools have valid definitions" do
-    [
-      Agent::Tools::ListAppTables,
-      Agent::Tools::QueryAppData,
-      Agent::Tools::InsertAppData,
-      Agent::Tools::UpdateAppData,
-      Agent::Tools::DeleteAppData
-    ].each do |tool_class|
-      defn = tool_class.definition
-      assert_equal "function", defn[:type]
-      assert defn[:function][:name].present?
-      assert defn[:function][:description].present?
-      assert defn[:function][:parameters].present?
+    @written_apps.each do |app|
+      FileUtils.rm_f(app.agent_tools_manifest_path)
+      app.remove_instance_variable(:@agent_tools_manifest) if app.instance_variable_defined?(:@agent_tools_manifest)
     end
   end
 
+  test "registry executes app-specific create, find, change, remove, and save tools" do
+    write_manifest(@app, tools_manifest(@table))
+
+    create_result = execute("app_draft_app_add_task", "title" => "Buy milk")
+    assert_ok(create_result)
+    row_id = create_result.dig("result", "id")
+    assert_equal "Buy milk", create_result.dig("result", "row", "title")
+
+    find_result = execute("app_draft_app_find_tasks", "done" => 0)
+    assert_ok(find_result)
+    assert_equal 1, find_result.dig("result", "rows").size
+
+    change_result = execute("app_draft_app_mark_done", "id" => row_id)
+    assert_ok(change_result)
+    assert_equal 1, change_result.dig("result", "changed")
+    assert_equal 1, change_result.dig("result", "row", "done")
+
+    save_create = execute("app_draft_app_save_task", "title" => "Write tests", "done" => 0)
+    assert_ok(save_create)
+    assert_equal "created", save_create.dig("result", "action")
+
+    save_update = execute("app_draft_app_save_task", "title" => "Write tests", "done" => 1)
+    assert_ok(save_update)
+    assert_equal "updated", save_update.dig("result", "action")
+    assert_equal 1, save_update.dig("result", "row", "done")
+
+    remove_result = execute("app_draft_app_remove_task", "id" => row_id)
+    assert_ok(remove_result)
+    assert_equal 1, remove_result.dig("result", "removed")
+  end
+
+  test "inspect tool returns table schema metadata" do
+    write_manifest(@app, tools_manifest(@table))
+
+    result = execute("app_draft_app_inspect")
+    assert_ok(result)
+
+    table = result.dig("result", "tables").find { |t| t["name"] == @table }
+    assert table
+    assert_includes table["columns"].map { |c| c["name"] }, "title"
+    assert_includes table["columns"].map { |c| c["name"] }, "done"
+  end
+
+  test "workflow runs atomically" do
+    write_manifest(@app, tools_manifest(@table))
+
+    result = execute("app_draft_app_fail_workflow", "title" => "bad write")
+
+    refute result["ok"]
+    assert_equal "unknown_column", result.dig("error", "code")
+    assert_empty @app.query(@table, where: { "title" => "bad write" })
+  end
+
+  test "returns structured invalid_arguments error" do
+    write_manifest(@app, tools_manifest(@table))
+
+    result = execute("app_draft_app_add_task")
+
+    refute result["ok"]
+    assert_equal "invalid_arguments", result.dig("error", "code")
+  end
+
+  test "returns row_limit_exceeded for filtered change over limit" do
+    write_manifest(@app, tools_manifest(@table))
+    @app.insert_row(@table, { "title" => "A", "done" => 0 })
+    @app.insert_row(@table, { "title" => "B", "done" => 0 })
+
+    result = execute("app_draft_app_mark_all_done")
+
+    refute result["ok"]
+    assert_equal "row_limit_exceeded", result.dig("error", "code")
+  end
+
+  test "granted agent receives and executes app-specific tools" do
+    app = custom_apps(:slideshow)
+    table = "t_#{SecureRandom.hex(4)}"
+    app.create_table(table, [ { "name" => "name", "type" => "TEXT" } ])
+    write_manifest(app, {
+      "version" => 1,
+      "tools" => [
+        {
+          "name" => "add_slide",
+          "description" => "Add slide",
+          "parameters" => {
+            "type" => "object",
+            "properties" => { "name" => { "type" => "string" } },
+            "required" => [ "name" ]
+          },
+          "behavior" => { "kind" => "create", "table" => table, "data" => { "name" => { "arg" => "name" } } }
+        }
+      ]
+    })
+
+    tool_names = Agent::ToolRegistry.definitions(agent: @granted_agent).map { |d| d[:function][:name] }
+    assert_includes tool_names, "app_slideshow_add_slide"
+
+    result = JSON.parse(Agent::ToolRegistry.execute("app_slideshow_add_slide", { "name" => "Intro" }, agent: @granted_agent))
+    assert_ok(result)
+    assert_equal "Intro", result.dig("result", "row", "name")
+  ensure
+    app.drop_table(table) if app && table
+  end
+
+  test "missing manifest returns structured error" do
+    result = JSON.parse(Agent::ToolRegistry.execute("app_draft_app_add_task", {}, agent: @agent))
+
+    refute result["ok"]
+    assert_equal "manifest_missing", result.dig("error", "code")
+  end
+
   private
-    def call_tool(klass, arguments)
-      klass.new(agent: @agent, arguments: arguments).call
+    def execute(tool_name, arguments = {})
+      JSON.parse(Agent::ToolRegistry.execute(tool_name, arguments, agent: @agent))
+    end
+
+    def assert_ok(result)
+      assert_equal true, result["ok"], "Expected success, got: #{result.inspect}"
+    end
+
+    def write_manifest(app, manifest)
+      FileUtils.mkdir_p(app.files_path)
+      File.write(app.agent_tools_manifest_path, manifest.to_yaml)
+      @written_apps << app
+    end
+
+    def tools_manifest(table)
+      {
+        "version" => 1,
+        "tools" => [
+          {
+            "name" => "inspect",
+            "description" => "Inspect app data",
+            "parameters" => { "type" => "object", "properties" => {}, "required" => [] },
+            "behavior" => { "kind" => "inspect" }
+          },
+          {
+            "name" => "add_task",
+            "description" => "Add task",
+            "parameters" => {
+              "type" => "object",
+              "properties" => { "title" => { "type" => "string" } },
+              "required" => [ "title" ]
+            },
+            "behavior" => {
+              "kind" => "create",
+              "table" => table,
+              "data" => { "title" => { "arg" => "title" }, "done" => 0 }
+            }
+          },
+          {
+            "name" => "find_tasks",
+            "description" => "Find tasks",
+            "parameters" => {
+              "type" => "object",
+              "properties" => { "done" => { "type" => "integer" } },
+              "required" => [ "done" ]
+            },
+            "behavior" => {
+              "kind" => "find",
+              "table" => table,
+              "where" => { "done" => { "arg" => "done" } },
+              "order" => [ { "column" => "id", "direction" => "ASC" } ]
+            }
+          },
+          {
+            "name" => "mark_done",
+            "description" => "Mark one task done",
+            "parameters" => {
+              "type" => "object",
+              "properties" => { "id" => { "type" => "integer" } },
+              "required" => [ "id" ]
+            },
+            "behavior" => {
+              "kind" => "change",
+              "table" => table,
+              "id" => { "arg" => "id" },
+              "data" => { "done" => 1 }
+            }
+          },
+          {
+            "name" => "mark_all_done",
+            "description" => "Mark all tasks done",
+            "parameters" => { "type" => "object", "properties" => {}, "required" => [] },
+            "behavior" => {
+              "kind" => "change",
+              "table" => table,
+              "where" => { "done" => 0 },
+              "max_rows" => 1,
+              "data" => { "done" => 1 }
+            }
+          },
+          {
+            "name" => "remove_task",
+            "description" => "Remove a task",
+            "parameters" => {
+              "type" => "object",
+              "properties" => { "id" => { "type" => "integer" } },
+              "required" => [ "id" ]
+            },
+            "behavior" => {
+              "kind" => "remove",
+              "table" => table,
+              "id" => { "arg" => "id" }
+            }
+          },
+          {
+            "name" => "save_task",
+            "description" => "Create or update a task by title",
+            "parameters" => {
+              "type" => "object",
+              "properties" => {
+                "title" => { "type" => "string" },
+                "done" => { "type" => "integer" }
+              },
+              "required" => [ "title", "done" ]
+            },
+            "behavior" => {
+              "kind" => "save",
+              "table" => table,
+              "match" => { "title" => { "arg" => "title" } },
+              "data" => { "title" => { "arg" => "title" }, "done" => { "arg" => "done" } }
+            }
+          },
+          {
+            "name" => "fail_workflow",
+            "description" => "Fail after writing",
+            "parameters" => {
+              "type" => "object",
+              "properties" => { "title" => { "type" => "string" } },
+              "required" => [ "title" ]
+            },
+            "behavior" => {
+              "kind" => "workflow",
+              "steps" => [
+                {
+                  "kind" => "create",
+                  "table" => table,
+                  "data" => { "title" => { "arg" => "title" }, "done" => 0 }
+                },
+                {
+                  "kind" => "change",
+                  "table" => table,
+                  "where" => { "title" => { "arg" => "title" } },
+                  "max_rows" => 1,
+                  "data" => { "missing_column" => 1 }
+                }
+              ]
+            }
+          }
+        ]
+      }
     end
 end
