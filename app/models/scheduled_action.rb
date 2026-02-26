@@ -126,6 +126,7 @@ class ScheduledAction < ApplicationRecord
         role: "system",
         content: "[Scheduled Reminder ##{id}: #{title}] #{payload.fetch("message")}"
       )
+      broadcast_chat_message(target_chat, msg)
 
       target_chat.enqueue_agent_reply(agent: agent)
 
@@ -163,18 +164,21 @@ class ScheduledAction < ApplicationRecord
     def post_automation_result(target_chat, tool_name, result)
       tool_call_id = "call_scheduled_#{SecureRandom.hex(4)}"
 
-      target_chat.messages.create!(
+      assistant_msg = target_chat.messages.create!(
         role: "assistant",
         sender: agent,
         content: nil,
         tool_calls: [ { id: tool_call_id, type: "function", function: { name: tool_name, arguments: payload.fetch("arguments", {}).to_json } } ]
       )
+      broadcast_chat_message(target_chat, assistant_msg)
 
-      target_chat.messages.create!(
+      tool_msg = target_chat.messages.create!(
         role: "tool",
         tool_call_id: tool_call_id,
         content: "[scheduled automation #{automation_result_failed?(result) ? "failed" : "completed"}]\n\n#{result.truncate(12_000)}"
       )
+      broadcast_chat_message(target_chat, tool_msg)
+      tool_msg
     end
 
     def automation_result_failed?(result)
@@ -248,5 +252,14 @@ class ScheduledAction < ApplicationRecord
       Time.iso8601(value.to_s)
     rescue ArgumentError
       raise ArgumentError, "Invalid timestamp: #{value}"
+    end
+
+    def broadcast_chat_message(target_chat, message)
+      Turbo::StreamsChannel.broadcast_append_to(
+        target_chat,
+        target: "chat-messages",
+        partial: "chats/messages/message",
+        locals: { message: message, agent: agent }
+      )
     end
 end
