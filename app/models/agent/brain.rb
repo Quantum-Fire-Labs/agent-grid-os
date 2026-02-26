@@ -62,17 +62,6 @@ class Agent::Brain
 
   private
     def think(&on_token)
-      if (provider_plugin = agent.plugins.detect { |p| p.provider_mode?(agent) })
-        klass = provider_plugin.provider_entrypoint_class
-        instance = klass.new(agent: agent, plugin: provider_plugin)
-        return instance.chat(
-          messages: build_messages,
-          model: agent.model,
-          chat: chat,
-          &on_token
-        )
-      end
-
       provider = agent.resolve_provider
       raise Providers::Error, "No provider configured" unless provider
 

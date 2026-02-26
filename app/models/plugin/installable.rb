@@ -44,8 +44,7 @@ module Plugin::Installable
       permissions: manifest["permissions"] || {},
       config_schema: manifest["config"] || [],
       packages: manifest["packages"] || [],
-      mounts: manifest["mounts"] || [],
-      provider_config: manifest["provider"]
+      mounts: manifest["mounts"] || []
     )
   end
 

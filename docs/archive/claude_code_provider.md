@@ -1,3 +1,46 @@
+# Claude Code as Provider — Archived Implementation
+
+Removed in favor of keeping Claude Code as a tool-mode plugin only.
+This code is saved for potential re-implementation later.
+
+## Overview
+
+Extended the plugin system with a `provider` capability so Claude Code could
+serve as the reasoning engine (not just a delegated tool). Plugin declared a
+`provider` section in its YAML manifest with models and entrypoint. A MODE
+config toggle (tool/provider) controlled behavior per-agent. When MODE=provider,
+Brain delegated to the plugin's `chat()` method which streamed Claude Code
+output via `workspace.stream_exec()`.
+
+## Plugin::Providable Concern
+
+```ruby
+# app/models/plugin/providable.rb
+module Plugin::Providable
+  extend ActiveSupport::Concern
+
+  def provider?
+    provider_config.present?
+  end
+
+  def provider_mode?(agent)
+    provider? && resolve_config("MODE", agent: agent) == "provider"
+  end
+
+  def provider_entrypoint_class
+    return nil unless provider?
+
+    entrypoint_file = provider_config["entrypoint"]
+    load path.join(entrypoint_file).to_s
+    name.classify.constantize
+  end
+end
+```
+
+## ClaudeCode Provider Entrypoint
+
+```ruby
+# lib/plugins/claude_code/claude_code.rb
 class ClaudeCode
   def initialize(agent:, plugin:)
     @agent = agent
@@ -87,3 +130,62 @@ class ClaudeCode
       workspace.exec("cat > /home/agent/.claude_sessions/#{safe_id}", stdin: session_id, timeout: 5)
     end
 end
+```
+
+## Brain Integration
+
+```ruby
+# In Agent::Brain#think, before normal provider dispatch:
+if (provider_plugin = agent.plugins.detect { |p| p.provider_mode?(agent) })
+  klass = provider_plugin.provider_entrypoint_class
+  instance = klass.new(agent: agent, plugin: provider_plugin)
+  return instance.chat(
+    messages: build_messages,
+    model: agent.model,
+    chat: chat,
+    &on_token
+  )
+end
+```
+
+## PromptBuilder Skip
+
+```ruby
+# In Agent::PromptBuilder#plugin_instructions:
+next if plugin.provider_mode?(agent)
+```
+
+## Plugin YAML Provider Section
+
+```yaml
+provider:
+  entrypoint: claude_code.rb
+  models:
+    - id: claude-sonnet-4-6
+      name: Claude Sonnet 4.6
+    - id: claude-opus-4-6
+      name: Claude Opus 4.6
+    - id: claude-haiku-4-5
+      name: Claude Haiku 4.5
+
+# Additional config entries:
+config:
+  - key: MODE
+    type: select
+    options:
+      - tool
+      - provider
+    default: tool
+    label: "Mode (tool = agent delegates to Claude Code; provider = Claude Code is the reasoning engine)"
+  - key: CLAUDE_MODEL
+    type: string
+    required: false
+    label: "Model for provider mode (e.g. claude-sonnet-4-6)"
+```
+
+## Database
+
+```ruby
+# Migration: add_column :plugins, :provider_config, :json
+# Plugin::Installable: provider_config: manifest["provider"]
+```

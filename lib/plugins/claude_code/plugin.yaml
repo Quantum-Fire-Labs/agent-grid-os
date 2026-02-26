@@ -5,16 +5,6 @@ description: "Use Claude Code for complex coding tasks in the workspace"
 execution: sandbox
 entrypoint: null
 
-provider:
-  entrypoint: claude_code.rb
-  models:
-    - id: claude-sonnet-4-6
-      name: Claude Sonnet 4.6
-    - id: claude-opus-4-6
-      name: Claude Opus 4.6
-    - id: claude-haiku-4-5
-      name: Claude Haiku 4.5
-
 tools:
   - name: claude_code
     description: "Delegate a coding task to Claude Code. Runs asynchronously — returns immediately and delivers the result when done."
@@ -54,17 +44,6 @@ config:
     type: secret
     required: false
     label: "Anthropic API Key (optional — use subscription login instead)"
-  - key: MODE
-    type: select
-    options:
-      - tool
-      - provider
-    default: tool
-    label: "Mode (tool = agent delegates to Claude Code; provider = Claude Code is the reasoning engine)"
-  - key: CLAUDE_MODEL
-    type: string
-    required: false
-    label: "Model for provider mode (e.g. claude-sonnet-4-6)"
 
 instructions: |
   # Claude Code
