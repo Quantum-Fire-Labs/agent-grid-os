@@ -123,7 +123,6 @@ class Agent::Tools::AppDataToolsTest < ActiveSupport::TestCase
     app.status = "published"
     app.save!
     CustomAppAgentAccess.create!(agent: @granted_agent, custom_app: app)
-
     table = "t_#{SecureRandom.hex(4)}"
     app.create_table(table, [ { "name" => "name", "type" => "TEXT" } ])
     write_manifest(app, {

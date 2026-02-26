@@ -2,7 +2,11 @@ module CustomApp::Servable
   extend ActiveSupport::Concern
 
   def storage_path
-    Rails.root.join("storage", "apps", id.to_s)
+    if Rails.env.test?
+      Rails.root.join("tmp", "test-storage", "apps", Process.pid.to_s, id.to_s)
+    else
+      Rails.root.join("storage", "apps", id.to_s)
+    end
   end
 
   def files_path
