@@ -3,8 +3,15 @@ require "test_helper"
 class Agent::Tools::AppDataToolsTest < ActiveSupport::TestCase
   setup do
     @agent = agents(:one)
-    @app = custom_apps(:draft_app)
     @granted_agent = agents(:three)
+    @app = @agent.custom_apps.create!(
+      slug: "tooltest-#{SecureRandom.hex(4)}",
+      name: "Tool Test",
+      description: "Tool test app",
+      path: "apps/tooltest-#{SecureRandom.hex(4)}",
+      entrypoint: "index.html",
+      status: "draft"
+    )
     @table = "t_#{SecureRandom.hex(4)}"
     @written_apps = []
 
@@ -15,7 +22,7 @@ class Agent::Tools::AppDataToolsTest < ActiveSupport::TestCase
   end
 
   teardown do
-    [ @app, custom_apps(:slideshow) ].uniq.compact.each do |app|
+    [ @app, *@written_apps ].uniq.compact.each do |app|
       begin
         app.drop_table(@table) if @table
       rescue
@@ -26,35 +33,40 @@ class Agent::Tools::AppDataToolsTest < ActiveSupport::TestCase
       FileUtils.rm_f(app.agent_tools_manifest_path)
       app.remove_instance_variable(:@agent_tools_manifest) if app.instance_variable_defined?(:@agent_tools_manifest)
     end
+
+    if @app
+      FileUtils.rm_rf(@app.storage_path)
+      @app.destroy! if @app.persisted?
+    end
   end
 
   test "registry executes app-specific create, find, change, remove, and save tools" do
     write_manifest(@app, tools_manifest(@table))
 
-    create_result = execute("app_draft_app_add_task", "title" => "Buy milk")
+    create_result = execute("#{@app.agent_tool_prefix}add_task", "title" => "Buy milk")
     assert_ok(create_result)
     row_id = create_result.dig("result", "id")
     assert_equal "Buy milk", create_result.dig("result", "row", "title")
 
-    find_result = execute("app_draft_app_find_tasks", "done" => 0)
+    find_result = execute("#{@app.agent_tool_prefix}find_tasks", "done" => 0)
     assert_ok(find_result)
     assert_equal 1, find_result.dig("result", "rows").size
 
-    change_result = execute("app_draft_app_mark_done", "id" => row_id)
+    change_result = execute("#{@app.agent_tool_prefix}mark_done", "id" => row_id)
     assert_ok(change_result)
     assert_equal 1, change_result.dig("result", "changed")
     assert_equal 1, change_result.dig("result", "row", "done")
 
-    save_create = execute("app_draft_app_save_task", "title" => "Write tests", "done" => 0)
+    save_create = execute("#{@app.agent_tool_prefix}save_task", "title" => "Write tests", "done" => 0)
     assert_ok(save_create)
     assert_equal "created", save_create.dig("result", "action")
 
-    save_update = execute("app_draft_app_save_task", "title" => "Write tests", "done" => 1)
+    save_update = execute("#{@app.agent_tool_prefix}save_task", "title" => "Write tests", "done" => 1)
     assert_ok(save_update)
     assert_equal "updated", save_update.dig("result", "action")
     assert_equal 1, save_update.dig("result", "row", "done")
 
-    remove_result = execute("app_draft_app_remove_task", "id" => row_id)
+    remove_result = execute("#{@app.agent_tool_prefix}remove_task", "id" => row_id)
     assert_ok(remove_result)
     assert_equal 1, remove_result.dig("result", "removed")
   end
@@ -62,7 +74,7 @@ class Agent::Tools::AppDataToolsTest < ActiveSupport::TestCase
   test "inspect tool returns table schema metadata" do
     write_manifest(@app, tools_manifest(@table))
 
-    result = execute("app_draft_app_inspect")
+    result = execute("#{@app.agent_tool_prefix}inspect")
     assert_ok(result)
 
     table = result.dig("result", "tables").find { |t| t["name"] == @table }
@@ -74,7 +86,7 @@ class Agent::Tools::AppDataToolsTest < ActiveSupport::TestCase
   test "workflow runs atomically" do
     write_manifest(@app, tools_manifest(@table))
 
-    result = execute("app_draft_app_fail_workflow", "title" => "bad write")
+    result = execute("#{@app.agent_tool_prefix}fail_workflow", "title" => "bad write")
 
     refute result["ok"]
     assert_equal "unknown_column", result.dig("error", "code")
@@ -84,7 +96,7 @@ class Agent::Tools::AppDataToolsTest < ActiveSupport::TestCase
   test "returns structured invalid_arguments error" do
     write_manifest(@app, tools_manifest(@table))
 
-    result = execute("app_draft_app_add_task")
+    result = execute("#{@app.agent_tool_prefix}add_task")
 
     refute result["ok"]
     assert_equal "invalid_arguments", result.dig("error", "code")
@@ -95,14 +107,23 @@ class Agent::Tools::AppDataToolsTest < ActiveSupport::TestCase
     @app.insert_row(@table, { "title" => "A", "done" => 0 })
     @app.insert_row(@table, { "title" => "B", "done" => 0 })
 
-    result = execute("app_draft_app_mark_all_done")
+    result = execute("#{@app.agent_tool_prefix}mark_all_done")
 
     refute result["ok"]
     assert_equal "row_limit_exceeded", result.dig("error", "code")
   end
 
   test "granted agent receives and executes app-specific tools" do
-    app = custom_apps(:slideshow)
+    app = custom_apps(:slideshow).dup
+    app.agent = agents(:one)
+    app.account = accounts(:one)
+    app.slug = "slideshow-tooltest-#{SecureRandom.hex(3)}"
+    app.name = "Slideshow Tool Test"
+    app.path = "apps/slideshow-tooltest-#{SecureRandom.hex(3)}"
+    app.status = "published"
+    app.save!
+    CustomAppAgentAccess.create!(agent: @granted_agent, custom_app: app)
+
     table = "t_#{SecureRandom.hex(4)}"
     app.create_table(table, [ { "name" => "name", "type" => "TEXT" } ])
     write_manifest(app, {
@@ -121,18 +142,21 @@ class Agent::Tools::AppDataToolsTest < ActiveSupport::TestCase
       ]
     })
 
+    tool_name = "#{app.agent_tool_prefix}add_slide"
     tool_names = Agent::ToolRegistry.definitions(agent: @granted_agent).map { |d| d[:function][:name] }
-    assert_includes tool_names, "app_slideshow_add_slide"
+    assert_includes tool_names, tool_name
 
-    result = JSON.parse(Agent::ToolRegistry.execute("app_slideshow_add_slide", { "name" => "Intro" }, agent: @granted_agent))
+    result = JSON.parse(Agent::ToolRegistry.execute(tool_name, { "name" => "Intro" }, agent: @granted_agent))
     assert_ok(result)
     assert_equal "Intro", result.dig("result", "row", "name")
   ensure
     app.drop_table(table) if app && table
+    FileUtils.rm_rf(app.storage_path) if app&.respond_to?(:storage_path)
+    app.destroy! if app&.persisted?
   end
 
   test "missing manifest returns structured error" do
-    result = JSON.parse(Agent::ToolRegistry.execute("app_draft_app_add_task", {}, agent: @agent))
+    result = JSON.parse(Agent::ToolRegistry.execute("#{@app.agent_tool_prefix}add_task", {}, agent: @agent))
 
     refute result["ok"]
     assert_equal "manifest_missing", result.dig("error", "code")

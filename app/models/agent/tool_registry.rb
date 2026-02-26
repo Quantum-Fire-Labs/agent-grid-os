@@ -85,7 +85,9 @@ class Agent::ToolRegistry
   end
 
   def self.execute_app_tool(name, arguments, agent:)
-    app = agent.accessible_apps.to_a.find { |candidate| name.start_with?(candidate.agent_tool_prefix) }
+    app = agent.accessible_apps.to_a
+      .sort_by { |candidate| -candidate.agent_tool_prefix.length }
+      .find { |candidate| name.start_with?(candidate.agent_tool_prefix) }
     return "Unknown tool: #{name}" unless app
 
     action = name.delete_prefix(app.agent_tool_prefix)
