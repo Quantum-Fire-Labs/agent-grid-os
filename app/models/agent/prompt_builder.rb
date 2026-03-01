@@ -148,36 +148,100 @@ class Agent::PromptBuilder
         - Each tool becomes a callable tool named `app_<slug>_<name>` (slug hyphens become underscores)
         - Use this to expose domain actions like `add_task`, `publish_slide`, `archive_note`
 
-        Minimal example:
+        #### Data value bindings
+
+        In `data`, `where`, `match`, `id`, `limit`, and `offset` fields, values can be:
+        - `{ arg: param_name }` — resolved from the tool's arguments at call time
+        - A literal scalar (string, integer, etc.) — used as-is
+
+        **Important:** Only these two forms are supported. Do not invent other binding syntax (no `{ now: true }`, `{ default: ... }`, `{ value: ... }`, etc.). If you need a computed value like a timestamp, make it a required parameter and pass it explicitly.
+
+        #### Behavior kinds and their fields
+
+        **`create`** — insert a row
+        - `table` (required), `data` (required: column-to-value mapping)
+
+        **`find`** — query rows
+        - `table` (required), `where` (optional: column-to-value filter), `order` (optional: `[{column: "name", direction: "ASC"}]`), `limit` (optional, default 100, max 1000), `offset` (optional), `select` (optional: array of column names)
+
+        **`fetch`** — get a single row
+        - `table` (required), `id` (row id) OR `where` (first matching row)
+
+        **`change`** — update rows
+        - `table` (required), `data` (required: columns to update)
+        - By id: `id: { arg: id }`
+        - By filter: `where: { col: value }`, `max_rows` (required safety limit)
+
+        **`remove`** — delete rows
+        - `table` (required)
+        - By id: `id: { arg: id }`
+        - By filter: `where: { col: value }`, `max_rows` (required safety limit)
+
+        **`save`** — upsert (create or update)
+        - `table` (required), `match` (required: columns to match on), `data` (required: columns to set)
+
+        **`inspect`** — returns table schema (no additional fields)
+
+        **`workflow`** — run multiple steps atomically
+        - `steps` (required: array of behavior objects, max 25)
+
+        #### Example manifest
 
         ```yaml
         version: 1
         tools:
-          - name: add_task
-            description: Add a task to the tasks table
+          - name: create_proposal
+            description: Create a new proposal
             parameters:
               type: object
               properties:
-                title:
-                  type: string
-              required: [title]
+                title: { type: string }
+                content: { type: string }
+                status: { type: string }
+              required: [title, content, status]
             behavior:
               kind: create
-              table: tasks
+              table: proposals
               data:
                 title: { arg: title }
-                done: 0
+                content: { arg: content }
+                status: { arg: status }
+
+          - name: find_proposals
+            description: Find proposals by status
+            parameters:
+              type: object
+              properties:
+                status: { type: string }
+              required: [status]
+            behavior:
+              kind: find
+              table: proposals
+              where:
+                status: { arg: status }
+              order: [{ column: id, direction: DESC }]
+
+          - name: update_proposal
+            description: Update a proposal by id
+            parameters:
+              type: object
+              properties:
+                id: { type: integer }
+                status: { type: string }
+              required: [id, status]
+            behavior:
+              kind: change
+              table: proposals
+              id: { arg: id }
+              data:
+                status: { arg: status }
         ```
 
-        Supported `behavior.kind` values:
-        - `inspect`, `find`, `fetch`, `create`, `change`, `remove`, `save`, `workflow`
-        - `workflow` runs multiple steps atomically
-
-        Tips for authoring app tools:
+        #### Tips
         - Keep tool names domain-specific and action-oriented (`publish_slide`, not `update_row`)
         - Start with a small set of high-value tools users will ask for often
-        - Match parameter names/types exactly to what the tool should accept
-        - Prefer app-specific tools over generic database assumptions when operating on app data
+        - Every value the tool needs must either be a literal or an `{ arg: name }` reference — there are no other binding forms
+        - If a field should have a default, make the parameter optional in the schema and always pass it from the caller
 
         ### Tips
         - Use inline `<script>` and `<style>` tags for simple apps, or reference separate files via relative paths
