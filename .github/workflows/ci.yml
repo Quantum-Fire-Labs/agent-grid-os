@@ -146,7 +146,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push app image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -157,7 +157,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=app
 
       - name: Build and push workspace image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: docker/workspace
           push: true
